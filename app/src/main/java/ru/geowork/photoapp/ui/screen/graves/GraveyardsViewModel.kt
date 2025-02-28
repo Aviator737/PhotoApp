@@ -44,6 +44,8 @@ class GraveyardsViewModel @Inject constructor(
             GraveyardsUiAction.OnItemNameConfirm -> handleOnItemNameConfirm()
 
             is GraveyardsUiAction.OnTakePhotoClick -> handleOnTakePhotoClick(uiAction.photoRow)
+            GraveyardsUiAction.OnRepeatPhoto -> handleOnRepeatPhoto()
+            GraveyardsUiAction.OnStopTakePhotos -> handleOnStopTakePhotos()
         }
     }
 
@@ -99,7 +101,7 @@ class GraveyardsViewModel @Inject constructor(
                 it.copy(
                     folderLevel = newFolderLevel,
                     parentFolders = newParentFolders,
-                    folderItems = newFolderItems.mapFolderItemsIfNeeded(newFolderLevel)
+                    folderItems = newFolderItems.mapFolderItemsIfNeeded(newParentFolders, newFolderLevel)
                 )
             }
         }
@@ -123,7 +125,7 @@ class GraveyardsViewModel @Inject constructor(
             state.copy(
                 folderLevel = newFolderLevel,
                 parentFolders = newParentFolders,
-                folderItems = newFolderItems.mapFolderItemsIfNeeded(newFolderLevel)
+                folderItems = newFolderItems.mapFolderItemsIfNeeded(newParentFolders, newFolderLevel)
             )
         }
     }
@@ -133,15 +135,15 @@ class GraveyardsViewModel @Inject constructor(
     }
 
     private fun handleOnAddFolderClick() {
-        updateUiState { it.copy(newItemDialog = FolderItem.Folder(name = "")) }
+        updateUiState { it.copy(newItemDialog = FolderItem.Folder(name = "", path = parentFolders.joinToString("/"))) }
     }
 
     private fun handleOnAddImageFileClick() {
-        updateUiState { it.copy(newItemDialog = FolderItem.ImageFile(name = "")) }
+        updateUiState { it.copy(newItemDialog = FolderItem.ImageFile(name = "", path = parentFolders.joinToString("/"))) }
     }
 
     private fun handleOnAddTextFileClick() {
-        updateUiState { it.copy(newItemDialog = FolderItem.TextFile(name = "")) }
+        updateUiState { it.copy(newItemDialog = FolderItem.TextFile(name = "", path = parentFolders.joinToString("/"))) }
     }
 
     private fun handleOnItemNameInput(name: String) = updateUiState {
@@ -157,10 +159,7 @@ class GraveyardsViewModel @Inject constructor(
 
     private fun handleOnItemNameConfirm() = viewModelScopeErrorHandled.launch {
         when(val item = uiState.value.newItemDialog) {
-            is FolderItem.Folder -> filesRepository.createFolderItem(
-                parentFolders.joinToString("/"),
-                item.copy(name = item.name.trim())
-            )
+            is FolderItem.Folder -> filesRepository.createFolderItem(item.copy(name = item.name.trim()))
             is FolderItem.ImageFile -> {}
             is FolderItem.TextFile -> {}
             else -> {}
@@ -168,15 +167,33 @@ class GraveyardsViewModel @Inject constructor(
         val folderItems = filesRepository.getFolderItems(parentFolders.joinToString("/"))
         updateUiState {
             it.copy(
-                folderItems = folderItems.mapFolderItemsIfNeeded(uiState.value.folderLevel),
+                folderItems = folderItems.mapFolderItemsIfNeeded(parentFolders, uiState.value.folderLevel),
                 showBottomSheet = false,
                 newItemDialog = null
             )
         }
     }
 
-    private fun handleOnTakePhotoClick(photoRow: FolderItem.PhotoRow) {
-        sendUiEvent(GraveyardsUiEvent.NavigateToCamera)
+    private var i = 0
+    private var currentPhotoRow: FolderItem.PhotoRow? = null
+
+    private fun handleOnTakePhotoClick(photoRow: FolderItem.PhotoRow) = viewModelScopeErrorHandled.launch {
+        i++
+        currentPhotoRow = photoRow
+        val item = FolderItem.ImageFile(
+            name = parentFolders.joinToString("_") + "_${photoRow.name}" + "_фото$i",
+            path = photoRow.path
+        )
+        val uri = filesRepository.createFolderItem(item)
+        uri?.let { sendUiEvent(GraveyardsUiEvent.NavigateToCamera(it)) }
+    }
+
+    private fun handleOnRepeatPhoto() {
+        currentPhotoRow?.let { handleOnTakePhotoClick(it) }
+    }
+
+    private fun handleOnStopTakePhotos() {
+        currentPhotoRow = null
     }
 
     private suspend fun getRootFolderItems(): List<FolderItem> {
@@ -192,6 +209,15 @@ class GraveyardsViewModel @Inject constructor(
         else -> FolderLevel.ROWS
     }
 
-    private fun List<FolderItem>.mapFolderItemsIfNeeded(newFolderLevel: FolderLevel) =
-        if (newFolderLevel == FolderLevel.ROWS) map { FolderItem.PhotoRow(name = it.name) } else this
+    private fun List<FolderItem>.mapFolderItemsIfNeeded(
+        parentFolders: List<String>,
+        newFolderLevel: FolderLevel
+    ) = if (newFolderLevel == FolderLevel.ROWS) {
+        map {
+            FolderItem.PhotoRow(
+                name = it.name,
+                path = parentFolders.joinToString("/") + "/${it.name}"
+            )
+        }
+    } else this
 }

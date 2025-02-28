@@ -1,12 +1,13 @@
 package ru.geowork.photoapp.data
 
 import android.content.Context
+import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import ru.geowork.photoapp.di.DispatcherIo
 import ru.geowork.photoapp.model.FolderItem
-import ru.geowork.photoapp.util.createPathInDocuments
+import ru.geowork.photoapp.util.createFileInDocuments
 import ru.geowork.photoapp.util.getFilesFromDocuments
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,17 +18,19 @@ class FilesRepository @Inject constructor(
     @DispatcherIo private val dispatcherIo: CoroutineDispatcher,
     private val accountRepository: AccountRepository
 ) {
-    suspend fun createFolderItem(relativePath: String, folderItem: FolderItem) {
-        when(folderItem) {
-            is FolderItem.Folder -> createPath(folderItem.name, relativePath)
-            is FolderItem.ImageFile -> TODO()
-            is FolderItem.TextFile -> TODO()
-            else -> {}
+    suspend fun createFolderItem(folderItem: FolderItem): Uri? {
+        val fileExt = when(folderItem) {
+            is FolderItem.Unknown,
+            is FolderItem.Folder,
+            is FolderItem.PhotoRow -> ""
+            is FolderItem.ImageFile -> ".jpg"
+            is FolderItem.TextFile -> ".txt"
         }
-    }
-
-    private suspend fun createPath(folderName: String, path: String) = withContext(dispatcherIo) {
-        context.createPathInDocuments(folderName,"${getAccountFolder()}${if (path.isNotEmpty()) "/$path" else ""}")
+        return context.createFileInDocuments(
+            fileName = folderItem.name,
+            path = "${getAccountFolder()}/${folderItem.path}",
+            ext = fileExt
+        )
     }
 
     suspend fun getFolderItems(path: String) = withContext(dispatcherIo) {

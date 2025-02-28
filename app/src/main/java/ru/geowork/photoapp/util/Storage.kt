@@ -9,9 +9,6 @@ import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import ru.geowork.photoapp.model.FolderItem
 import java.io.File
-import java.io.FileOutputStream
-import java.nio.ByteBuffer
-import java.nio.channels.Channels
 
 private const val APP_FOLDER_NAME = "GWApp"
 
@@ -19,38 +16,21 @@ private val APP_FILES_DIRECTORY =
     "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).path}/$APP_FOLDER_NAME"
 
 private const val MIME_TYPE_FOLDER = "vnd.android.document/directory"
+private const val MIME_TYPE_TEXT = "text/plain"
+private const val MIME_TYPE_IMAGE = "image/jpeg"
 
-fun Context.saveFileToDocuments(file: File, path: String) {
+fun Context.createFileInDocuments(fileName: String, path: String, ext: String): Uri? {
+    val mimeType = when (ext) {
+        ".txt" -> MIME_TYPE_TEXT
+        ".jpg" -> MIME_TYPE_IMAGE
+        else -> MIME_TYPE_FOLDER
+    }
     val contentValues = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
-        put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
-        put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/$APP_FOLDER_NAME/$path/${file.name}")
+        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+        put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+        put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/$APP_FOLDER_NAME/$path${if (ext.isEmpty()) "/$fileName" else ""}")
     }
-
-    val uri = contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
-    uri?.let {
-        contentResolver.openFileDescriptor(it, "w")?.use { parcelFileDescriptor ->
-            FileOutputStream(parcelFileDescriptor.fileDescriptor).use { outputStream ->
-                val fileChannel = outputStream.channel
-                val inputChannel = Channels.newChannel(file.inputStream())
-                val buffer = ByteBuffer.allocateDirect(DEFAULT_BUFFER_SIZE)
-                while (inputChannel.read(buffer) > 0) {
-                    buffer.flip()
-                    fileChannel.write(buffer)
-                    buffer.clear()
-                }
-            }
-        }
-    }
-}
-
-fun Context.createPathInDocuments(folderName: String, path: String) {
-    val contentValues = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, folderName)
-        put(MediaStore.MediaColumns.MIME_TYPE, MIME_TYPE_FOLDER)
-        put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/$APP_FOLDER_NAME/$path/$folderName")
-    }
-    contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+    return contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
 }
 
 fun Context.getFilesFromDocuments(path: String): List<FolderItem> {

@@ -1,6 +1,8 @@
 package ru.geowork.photoapp.ui.screen.graves
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -13,7 +15,6 @@ import androidx.navigation.compose.composable
 const val GRAVEYARDS_SCREEN_ID = "graveyards_screen"
 
 fun NavGraphBuilder.graveyardsScreen(
-    navigateToCamera: () -> Unit,
     onBack: () -> Unit
 ) {
     composable(GRAVEYARDS_SCREEN_ID) {
@@ -23,11 +24,22 @@ fun NavGraphBuilder.graveyardsScreen(
 
         BackHandler(enabled = true, onBack = { viewModel.onUiAction(GraveyardsUiAction.OnBack) })
 
+        val cameraLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+            onResult = { success ->
+                if (success) {
+                    viewModel.onUiAction(GraveyardsUiAction.OnRepeatPhoto)
+                } else {
+                    viewModel.onUiAction(GraveyardsUiAction.OnStopTakePhotos)
+                }
+            }
+        )
+
         uiEvents.firstOrNull()?.let { uiEvent ->
             LaunchedEffect(uiEvent) {
                 when(uiEvent) {
+                    is GraveyardsUiEvent.NavigateToCamera -> cameraLauncher.launch(uiEvent.uri)
                     GraveyardsUiEvent.NavigateBack -> onBack()
-                    GraveyardsUiEvent.NavigateToCamera -> navigateToCamera()
                 }
             }
             viewModel.onUiEventHandled(uiEvent)

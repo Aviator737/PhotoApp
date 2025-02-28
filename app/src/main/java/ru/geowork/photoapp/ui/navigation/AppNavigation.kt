@@ -8,7 +8,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import ru.geowork.photoapp.ui.screen.auth.authScreen
 import ru.geowork.photoapp.ui.screen.camera.cameraScreen
-import ru.geowork.photoapp.ui.screen.camera.navigateToCameraScreen
 import ru.geowork.photoapp.ui.screen.foldersync.folderSyncScreen
 import ru.geowork.photoapp.ui.screen.graves.graveyardsScreen
 import ru.geowork.photoapp.ui.screen.graves.navigateToGraveyardsScreen
@@ -67,7 +66,6 @@ fun AppNavigation(
             onBack = { navController.popBackStack() }
         )
         graveyardsScreen(
-            navigateToCamera = { navController.navigateToCameraScreen() },
             onBack = { navController.popBackStack() }
         )
         cameraScreen(

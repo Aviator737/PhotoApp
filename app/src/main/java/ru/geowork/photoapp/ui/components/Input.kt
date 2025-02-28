@@ -3,6 +3,7 @@ package ru.geowork.photoapp.ui.components
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -94,6 +95,7 @@ fun Input(
                     shape = RoundedCornerShape(12.dp),
                 )
                 .fillMaxWidth()
+                .background(AppTheme.colors.backgroundPrimary, RoundedCornerShape(12.dp))
                 .padding(horizontal = 16.dp, vertical = 6.dp)
                 .then(if (!isEditing) Modifier.noRippleClickable { focusRequester.requestFocus() } else Modifier),
                 verticalAlignment = Alignment.CenterVertically

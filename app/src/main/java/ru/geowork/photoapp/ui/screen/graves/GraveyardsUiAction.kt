@@ -21,4 +21,6 @@ sealed class GraveyardsUiAction: UiAction {
     data object OnItemNameConfirm: GraveyardsUiAction()
 
     data class OnTakePhotoClick(val photoRow: FolderItem.PhotoRow): GraveyardsUiAction()
+    data object OnRepeatPhoto: GraveyardsUiAction()
+    data object OnStopTakePhotos: GraveyardsUiAction()
 }
