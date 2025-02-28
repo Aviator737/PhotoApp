@@ -1,0 +1,46 @@
+<resources>
+    <string name="app_name">PhotoApp</string>
+    <string name="start">Начать работу</string>
+    <string name="cancel">Отмена</string>
+    <string name="ok">Ок</string>
+    <string name="save">Сохранить</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="next">Продолжить</string>
+
+    <string name="permissions_not_granted_blocked_title">Права не получены</string>
+    <string name="permissions_not_granted_title">Требуются права</string>
+    <string name="permissions_not_granted_blocked_text">Запрос был отклонен несколько раз. Теперь права можно получить только через системные настройки.</string>
+    <string name="files_permissions_not_granted_text">Разрешение на доступ ко всем файлам необходимо для корректной работы в папке Documents.</string>
+    <string name="camera_permissions_not_granted_text">Требуется разрешение на доступ к камере.</string>
+    <string name="permissions_not_granted_retry">Получить</string>
+    <string name="permissions_not_granted_exit">Выйти</string>
+
+    <string name="auth_greeting">Привет</string>
+    <string name="auth_photograph_name">Введи имя и фамилию</string>
+    <string name="auth_supervisor_name">Выбери своего старшего</string>
+    <string name="auth_supervisor_custom">Добавить своего старшего</string>
+
+    <string name="main_menu_graves">Захоронения</string>
+    <string name="main_menu_poles">Опоры</string>
+    <string name="main_menu_settings">Настройки</string>
+
+    <string name="graves_normal_mode">Сбор участков</string>
+    <string name="graves_edit_mode">Корректировки</string>
+
+    <string name="graves_add_block">Добавить квартал</string>
+    <string name="graves_add_graveyard">Добавить погост</string>
+    <string name="graves_add_row">Добавить ряд</string>
+    <string name="graves_add_image_file">Добавить карту квартала</string>
+    <string name="graves_add_text_file">Создать заметку</string>
+
+    <string name="graves_add_graveyard_hint">Название погоста</string>
+    <string name="graves_add_block_hint">Название квартала</string>
+    <string name="graves_add_row_hint">Название ряда</string>
+    <string name="graves_add_text_file_hint">Название заметки</string>
+
+    <plurals name="plurals_test">
+        <item quantity="one">%1$d бонус</item>
+        <item quantity="few">%1$d бонуса</item>
+        <item quantity="other">%1$d бонусов</item>
+    </plurals>
+</resources>
