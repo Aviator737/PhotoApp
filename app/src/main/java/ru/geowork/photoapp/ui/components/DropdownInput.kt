@@ -3,6 +3,7 @@ package ru.geowork.photoapp.ui.components
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.geowork.photoapp.R
@@ -50,6 +53,10 @@ fun DropdownInput(
         .border(
             border = BorderStroke(2.dp, AppTheme.colors.contentBorder),
             shape = RoundedCornerShape(12.dp),
+        )
+        .background(
+            color = AppTheme.colors.backgroundPrimary,
+            shape = RoundedCornerShape(12.dp)
         )
         .clip(RoundedCornerShape(12.dp))
         .clickable { if (enabled) onClick() }
@@ -88,6 +95,17 @@ fun DropdownInput(
             contentDescription = null,
             modifier = Modifier.padding(start = 8.dp).size(24.dp),
             colorFilter = ColorFilter.tint(AppTheme.colors.contentSecondary)
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewDropdownInput() {
+    AppTheme {
+        DropdownInput(
+            hint = stringResource(R.string.auth_supervisor_name),
+            text = ""
         )
     }
 }

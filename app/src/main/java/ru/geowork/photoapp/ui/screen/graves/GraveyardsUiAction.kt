@@ -12,7 +12,6 @@ sealed class GraveyardsUiAction: UiAction {
     data class OnParentFolderClick(val item: String): GraveyardsUiAction()
     data class OnFolderItemClick(val item: FolderItem): GraveyardsUiAction()
 
-    data class SetShowBottomSheet(val value: Boolean): GraveyardsUiAction()
     data object OnAddFolderClick: GraveyardsUiAction()
     data object OnAddImageFileClick: GraveyardsUiAction()
     data object OnAddTextFileClick: GraveyardsUiAction()

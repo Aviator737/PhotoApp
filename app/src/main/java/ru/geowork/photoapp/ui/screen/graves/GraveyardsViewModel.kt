@@ -35,7 +35,6 @@ class GraveyardsViewModel @Inject constructor(
             is GraveyardsUiAction.OnParentFolderClick -> handleOnParentFolderClick(uiAction.item)
             is GraveyardsUiAction.OnFolderItemClick -> handleOnFolderItemClick(uiAction.item)
 
-            is GraveyardsUiAction.SetShowBottomSheet -> handleSetShowBottomSheet(uiAction.value)
             GraveyardsUiAction.OnAddFolderClick -> handleOnAddFolderClick()
             GraveyardsUiAction.OnAddImageFileClick -> handleOnAddImageFileClick()
             GraveyardsUiAction.OnAddTextFileClick -> handleOnAddTextFileClick()
@@ -78,7 +77,11 @@ class GraveyardsViewModel @Inject constructor(
             1 -> {
                 val folderItems = getRootFolderItems()
                 updateUiState {
-                    it.copy(parentFolders = listOf(), folderItems = folderItems)
+                    it.copy(
+                        parentFolders = listOf(),
+                        folderItems = folderItems,
+                        folderLevel = getFolderLevel(0)
+                    )
                 }
             }
             else -> parentFolders.getOrNull(parentFolders.size - 2)?.let {
@@ -130,10 +133,6 @@ class GraveyardsViewModel @Inject constructor(
         }
     }
 
-    private fun handleSetShowBottomSheet(value: Boolean) {
-        updateUiState { it.copy(showBottomSheet = value) }
-    }
-
     private fun handleOnAddFolderClick() {
         updateUiState { it.copy(newItemDialog = FolderItem.Folder(name = "", path = parentFolders.joinToString("/"))) }
     }
@@ -168,7 +167,6 @@ class GraveyardsViewModel @Inject constructor(
         updateUiState {
             it.copy(
                 folderItems = folderItems.mapFolderItemsIfNeeded(parentFolders, uiState.value.folderLevel),
-                showBottomSheet = false,
                 newItemDialog = null
             )
         }
@@ -178,14 +176,14 @@ class GraveyardsViewModel @Inject constructor(
     private var currentPhotoRow: FolderItem.PhotoRow? = null
 
     private fun handleOnTakePhotoClick(photoRow: FolderItem.PhotoRow) = viewModelScopeErrorHandled.launch {
-        i++
-        currentPhotoRow = photoRow
-        val item = FolderItem.ImageFile(
-            name = parentFolders.joinToString("_") + "_${photoRow.name}" + "_фото$i",
-            path = photoRow.path
-        )
-        val uri = filesRepository.createFolderItem(item)
-        uri?.let { sendUiEvent(GraveyardsUiEvent.NavigateToCamera(it)) }
+//        i++
+//        currentPhotoRow = photoRow
+//        val item = FolderItem.ImageFile(
+//            name = parentFolders.joinToString("_") + "_${photoRow.name}" + "_фото$i",
+//            path = photoRow.path
+//        )
+//        val uri = filesRepository.createFolderItem(item)
+        sendUiEvent(GraveyardsUiEvent.NavigateToCamera)
     }
 
     private fun handleOnRepeatPhoto() {

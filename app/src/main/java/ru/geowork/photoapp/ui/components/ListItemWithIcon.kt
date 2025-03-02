@@ -1,6 +1,5 @@
 package ru.geowork.photoapp.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -37,7 +36,6 @@ fun ListItemWithIcon(
                 top = 14.dp,
                 bottom = 14.dp
             )
-            .background(AppTheme.colors.backgroundPrimary)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween

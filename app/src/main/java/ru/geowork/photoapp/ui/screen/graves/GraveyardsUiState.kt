@@ -11,7 +11,6 @@ data class GraveyardsUiState(
     val folderLevel: FolderLevel,
     val parentFolders: List<String> = listOf(),
     val folderItems: List<FolderItem> = listOf(),
-    val showBottomSheet: Boolean = false,
 
     val newItemDialog: FolderItem? = null
 ): UiState

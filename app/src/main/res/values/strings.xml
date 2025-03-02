@@ -27,10 +27,11 @@
     <string name="graves_normal_mode">Сбор участков</string>
     <string name="graves_edit_mode">Корректировки</string>
 
+    <string name="graves_choose_graveyard_title">Выберите погост</string>
     <string name="graves_add_block">Добавить квартал</string>
     <string name="graves_add_graveyard">Добавить погост</string>
     <string name="graves_add_row">Добавить ряд</string>
-    <string name="graves_add_image_file">Добавить карту квартала</string>
+    <string name="graves_add_image_file">Загрузить карту квартала</string>
     <string name="graves_add_text_file">Создать заметку</string>
 
     <string name="graves_add_graveyard_hint">Название погоста</string>

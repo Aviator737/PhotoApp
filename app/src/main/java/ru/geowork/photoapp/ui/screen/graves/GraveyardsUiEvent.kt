@@ -5,5 +5,5 @@ import ru.geowork.photoapp.ui.base.UiEvent
 
 sealed class GraveyardsUiEvent: UiEvent() {
     data object NavigateBack: GraveyardsUiEvent()
-    data class NavigateToCamera(val uri: Uri): GraveyardsUiEvent()
+    data object NavigateToCamera: GraveyardsUiEvent()
 }

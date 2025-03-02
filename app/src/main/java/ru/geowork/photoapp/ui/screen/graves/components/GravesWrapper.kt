@@ -1,4 +1,4 @@
-package ru.geowork.photoapp.ui.screen.graves
+package ru.geowork.photoapp.ui.screen.graves.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -44,7 +44,6 @@ fun GravesWrapper(
         .then(if(isEditMode) Modifier.border(
             border = BorderStroke(3.dp, AppTheme.colors.orange),
         ) else Modifier)
-        .background(AppTheme.colors.backgroundPrimary)
         .fillMaxSize()
     ) {
         Row(

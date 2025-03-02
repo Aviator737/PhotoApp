@@ -1,0 +1,61 @@
+package ru.geowork.photoapp.ui.screen.graves.components
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import ru.geowork.photoapp.R
+import ru.geowork.photoapp.model.FolderItem
+import ru.geowork.photoapp.ui.components.AppDialog
+import ru.geowork.photoapp.ui.components.Input
+import ru.geowork.photoapp.ui.screen.graves.FolderLevel
+import ru.geowork.photoapp.ui.theme.AppTheme
+
+@Composable
+fun CreateFolderItemDialog(
+    item: FolderItem,
+    folderLevel: FolderLevel,
+    onNameInput: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AppDialog(
+        title = when(item) {
+            is FolderItem.Folder -> when(folderLevel) {
+                FolderLevel.GRAVEYARDS -> stringResource(R.string.graves_add_graveyard)
+                FolderLevel.BLOCKS -> stringResource(R.string.graves_add_block)
+                FolderLevel.ROWS -> stringResource(R.string.graves_add_row)
+            }
+            is FolderItem.ImageFile -> stringResource(R.string.graves_add_image_file)
+            is FolderItem.TextFile -> stringResource(R.string.graves_add_text_file)
+            else -> ""
+        },
+        onDismiss = onDismiss,
+        onConfirm = onConfirm
+    ) {
+        Input(
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp),
+            hint = when(item) {
+                is FolderItem.Folder -> when(folderLevel) {
+                    FolderLevel.GRAVEYARDS -> stringResource(R.string.graves_add_graveyard)
+                    FolderLevel.BLOCKS -> stringResource(R.string.graves_add_block)
+                    FolderLevel.ROWS -> stringResource(R.string.graves_add_row)
+                }
+                is FolderItem.TextFile -> stringResource(R.string.graves_add_text_file_hint)
+                else -> ""
+            },
+            text = item.name,
+            onInput = onNameInput
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewCreateFolderItemDialog() {
+    AppTheme {
+        CreateFolderItemDialog(FolderItem.Folder(), FolderLevel.BLOCKS, {}, {}, {})
+    }
+}

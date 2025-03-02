@@ -1,6 +1,5 @@
 package ru.geowork.photoapp.ui.screen.mainmenu
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,11 +20,7 @@ fun MainMenu(
     navigateToPoles: () -> Unit,
     navigateToSettings: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .background(AppTheme.colors.backgroundPrimary)
-            .fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         ListItemWithIcon(
             modifier = Modifier.padding(horizontal = 16.dp),
             name = stringResource(R.string.main_menu_graves),

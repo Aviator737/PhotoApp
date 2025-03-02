@@ -11,11 +11,13 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.composable
+import ru.geowork.photoapp.ui.screen.graves.components.Graveyards
 
 const val GRAVEYARDS_SCREEN_ID = "graveyards_screen"
 
 fun NavGraphBuilder.graveyardsScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    navigateToCamera: () -> Unit
 ) {
     composable(GRAVEYARDS_SCREEN_ID) {
         val viewModel: GraveyardsViewModel = hiltViewModel()
@@ -38,7 +40,10 @@ fun NavGraphBuilder.graveyardsScreen(
         uiEvents.firstOrNull()?.let { uiEvent ->
             LaunchedEffect(uiEvent) {
                 when(uiEvent) {
-                    is GraveyardsUiEvent.NavigateToCamera -> cameraLauncher.launch(uiEvent.uri)
+                    is GraveyardsUiEvent.NavigateToCamera -> {
+                        navigateToCamera()
+                        //cameraLauncher.launch(uiEvent.uri)
+                    }
                     GraveyardsUiEvent.NavigateBack -> onBack()
                 }
             }

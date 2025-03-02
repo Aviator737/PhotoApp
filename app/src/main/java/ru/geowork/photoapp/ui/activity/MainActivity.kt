@@ -7,15 +7,19 @@ import android.os.Environment
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,6 +44,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge()
+
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -66,7 +73,8 @@ class MainActivity : ComponentActivity() {
                         startDestination = if (authorized) MAIN_MENU_SCREEN_ID else AUTH_SCREEN_ID,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(AppTheme.colors.backgroundPrimary)
+                            .background(AppTheme.colors.backgroundSecondary)
+                            .safeDrawingPadding()
                     )
                 }
             }
@@ -87,5 +95,19 @@ class MainActivity : ComponentActivity() {
     } catch (e: Exception) {
         val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
         requestAllFilesAccess.launch(intent)
+    }
+}
+
+@Preview
+@Composable
+fun PreviewMainActivity() {
+    AppTheme {
+        AppNavigation(
+            startDestination = MAIN_MENU_SCREEN_ID,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AppTheme.colors.backgroundSecondary)
+                .safeDrawingPadding()
+        )
     }
 }
