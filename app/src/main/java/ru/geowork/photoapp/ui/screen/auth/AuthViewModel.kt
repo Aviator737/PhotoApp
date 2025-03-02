@@ -2,15 +2,13 @@ package ru.geowork.photoapp.ui.screen.auth
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import ru.geowork.photoapp.data.AccountRepository
-import ru.geowork.photoapp.data.FilesRepository
+import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.ui.base.BaseViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val accountRepository: AccountRepository,
-    private val filesRepository: FilesRepository
+    private val dataStoreRepository: DataStoreRepository
 ): BaseViewModel<AuthUiState, AuthUiEvent, AuthUiAction>() {
 
     override val initialUiState: AuthUiState = AuthUiState()
@@ -37,7 +35,7 @@ class AuthViewModel @Inject constructor(
     private fun handleOnPhotographNameInput(value: String) {
         updateUiState { it.copy(photographName = value) }
         viewModelScopeErrorHandled.launch {
-            accountRepository.savePhotographName(value)
+            dataStoreRepository.savePhotographName(value)
         }
         checkCanGoNext()
     }
@@ -59,14 +57,13 @@ class AuthViewModel @Inject constructor(
 
     private fun handleOnSelectSupervisorClick() {
         viewModelScopeErrorHandled.launch {
-            val savedSupervisor = accountRepository.getAccount().supervisorName
-            val supervisors = accountRepository.getSupervisors()
-            val isCustomSupervisor = supervisors.firstOrNull { it == savedSupervisor } == null
+            val savedSupervisor = dataStoreRepository.getSupervisorName()
+            val isCustomSupervisor = SUPERVISORS.firstOrNull { it == savedSupervisor } == null
             updateUiState { state ->
                 state.copy(
                     isCustomSupervisorNameSelected = isCustomSupervisor && !savedSupervisor.isNullOrEmpty(),
                     customSupervisorName = savedSupervisor.takeIf { isCustomSupervisor }.orEmpty(),
-                    selectSupervisorDialog = accountRepository.getSupervisors().map {
+                    selectSupervisorDialog = SUPERVISORS.map {
                         it to (savedSupervisor == it)
                     }
                 )
@@ -103,7 +100,7 @@ class AuthViewModel @Inject constructor(
             )
         }
         viewModelScopeErrorHandled.launch {
-            accountRepository.saveSupervisorName(selectedSupervisor)
+            dataStoreRepository.saveSupervisorName(selectedSupervisor)
             checkCanGoNext()
         }
     }
@@ -123,13 +120,18 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun initValues() = viewModelScopeErrorHandled.launch {
-        val account = accountRepository.getAccount()
+        val photographName = dataStoreRepository.getPhotographName()
+        val supervisorName = dataStoreRepository.getSupervisorName()
         updateUiState {
             it.copy(
-                photographName = account.photographName.orEmpty(),
-                supervisorName = account.supervisorName.orEmpty()
+                photographName = photographName.orEmpty(),
+                supervisorName = supervisorName.orEmpty()
             )
         }
         checkCanGoNext()
+    }
+
+    companion object {
+        private val SUPERVISORS = listOf("Михаил Кулешов", "Сергей Новиков")
     }
 }

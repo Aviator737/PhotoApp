@@ -16,7 +16,7 @@ import javax.inject.Singleton
 class FilesRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     @DispatcherIo private val dispatcherIo: CoroutineDispatcher,
-    private val accountRepository: AccountRepository
+    private val dataStoreRepository: DataStoreRepository
 ) {
     suspend fun createFolderItem(folderItem: FolderItem): Uri? {
         val fileExt = when(folderItem) {
@@ -37,5 +37,5 @@ class FilesRepository @Inject constructor(
         context.getFilesFromDocuments("${getAccountFolder()}/$path")
     }
 
-    private suspend fun getAccountFolder() = accountRepository.getAccount().photographName
+    private suspend fun getAccountFolder() = dataStoreRepository.getPhotographName()
 }

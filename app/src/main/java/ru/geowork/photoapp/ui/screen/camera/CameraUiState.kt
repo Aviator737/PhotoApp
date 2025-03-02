@@ -1,8 +1,10 @@
 package ru.geowork.photoapp.ui.screen.camera
 
-import androidx.camera.core.SurfaceRequest
 import ru.geowork.photoapp.ui.base.UiState
 
 data class CameraUiState(
-    val surfaceRequest: SurfaceRequest? = null
+    val isHdrOn: Boolean = false,
+    val exposureCompensationIndex: Int? = null,
+    val zoomLevels: List<Pair<Float, Boolean>> = listOf(),
+    val showGrid: Boolean = false
 ): UiState

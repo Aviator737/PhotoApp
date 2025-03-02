@@ -2,14 +2,14 @@ package ru.geowork.photoapp.ui.activity
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import ru.geowork.photoapp.data.AccountRepository
+import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.ui.base.BaseViewModel
 import ru.geowork.photoapp.ui.base.UiEvent
 import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
-    private val accountRepository: AccountRepository
+    private val dataStoreRepository: DataStoreRepository
 ): BaseViewModel<MainActivityUiState, UiEvent, MainActivityUiAction>() {
 
     override val initialUiState: MainActivityUiState = MainActivityUiState()
@@ -28,10 +28,11 @@ class MainActivityViewModel @Inject constructor(
     }
 
     private fun checkAccount() = viewModelScopeErrorHandled.launch {
-        val account = accountRepository.getAccount()
+        val photographName = dataStoreRepository.getPhotographName()
+        val supervisorName = dataStoreRepository.getSupervisorName()
         updateUiState {
             it.copy(
-                authorized = !account.photographName.isNullOrEmpty() && !account.supervisorName.isNullOrEmpty()
+                authorized = !photographName.isNullOrEmpty() && !supervisorName.isNullOrEmpty()
             )
         }
     }

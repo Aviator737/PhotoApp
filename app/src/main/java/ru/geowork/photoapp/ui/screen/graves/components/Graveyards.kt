@@ -12,14 +12,12 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.geowork.photoapp.R
 import ru.geowork.photoapp.ui.components.ButtonLarge
 import ru.geowork.photoapp.ui.components.Chip
 import ru.geowork.photoapp.ui.components.FileManager
-import ru.geowork.photoapp.ui.components.ListItemWithIcon
 import ru.geowork.photoapp.ui.screen.graves.FolderLevel
 import ru.geowork.photoapp.ui.screen.graves.GraveyardsUiAction
 import ru.geowork.photoapp.ui.screen.graves.GraveyardsUiState
