@@ -8,6 +8,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.composable
+import ru.geowork.photoapp.ui.screen.camera.components.Camera
 
 
 const val CAMERA_SCREEN_ID = "camera_screen"

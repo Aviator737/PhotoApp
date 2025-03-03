@@ -1,4 +1,4 @@
-package ru.geowork.photoapp.ui.screen.camera
+package ru.geowork.photoapp.ui.screen.camera.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize

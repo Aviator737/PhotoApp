@@ -1,4 +1,4 @@
-package ru.geowork.photoapp.ui.screen.camera
+package ru.geowork.photoapp.ui.screen.camera.components
 
 import android.Manifest
 import android.util.Rational
@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +50,8 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.R
 import ru.geowork.photoapp.ui.components.WithPermissions
+import ru.geowork.photoapp.ui.screen.camera.CameraUiAction
+import ru.geowork.photoapp.ui.screen.camera.CameraUiState
 import ru.geowork.photoapp.ui.theme.AppTheme
 import ru.geowork.photoapp.ui.theme.BackgroundSecondaryDark
 import ru.geowork.photoapp.util.noRippleClickable
@@ -116,95 +120,94 @@ fun Camera(
 
     Column(modifier = Modifier
         .fillMaxWidth()
-        .background(BackgroundSecondaryDark)) {
+        .background(BackgroundSecondaryDark)
+    ) {
         WithPermissions(
             requestedPermissions = arrayOf(Manifest.permission.CAMERA),
             rationaleText = stringResource(R.string.camera_permissions_not_granted_text),
             onDismiss = { onUiAction(CameraUiAction.NavigateBack) }
         ) {
-            Column {
-                Row(
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 48.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Icon(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Icon(
-                        modifier = Modifier
-                            .noRippleClickable { onUiAction(CameraUiAction.SwitchHDR) }
-                            .padding(16.dp)
-                            .size(24.dp),
-                        painter = painterResource(if (state.isHdrOn) R.drawable.ic_hdr_on else R.drawable.ic_hdr_off),
-                        contentDescription = null,
-                        tint = if (state.isHdrOn) AppTheme.colors.orange else AppTheme.colors.contentConstant
-                    )
-                    Icon(
-                        modifier = Modifier
-                            .noRippleClickable { onUiAction(CameraUiAction.SwitchGrid) }
-                            .padding(16.dp)
-                            .size(24.dp),
-                        painter = painterResource(if (state.showGrid) R.drawable.ic_grid_3x3 else R.drawable.ic_grid_off),
-                        contentDescription = null,
-                        tint = if (state.showGrid) AppTheme.colors.orange else AppTheme.colors.contentConstant
-                    )
-                    Icon(
-                        modifier = Modifier
-                            .noRippleClickable { onUiAction(CameraUiAction.SwitchExposureMenu) }
-                            .padding(16.dp)
-                            .size(24.dp),
-                        painter = painterResource(R.drawable.ic_exposure),
-                        contentDescription = null,
-                        tint = if (state.exposureCompensationIndex != null) AppTheme.colors.orange else AppTheme.colors.contentConstant
-                    )
-                }
-                surfaceRequest?.let { surfaceRequest ->
-                    val coordinateTransformer = remember { MutableCoordinateTransformer() }
+                        .noRippleClickable { onUiAction(CameraUiAction.SwitchHDR) }
+                        .padding(16.dp)
+                        .size(24.dp),
+                    painter = painterResource(if (state.isHdrOn) R.drawable.ic_hdr_on else R.drawable.ic_hdr_off),
+                    contentDescription = null,
+                    tint = if (state.isHdrOn) AppTheme.colors.orange else AppTheme.colors.contentConstant
+                )
+                Icon(
+                    modifier = Modifier
+                        .noRippleClickable { onUiAction(CameraUiAction.SwitchGrid) }
+                        .padding(16.dp)
+                        .size(24.dp),
+                    painter = painterResource(if (state.showGrid) R.drawable.ic_grid_3x3 else R.drawable.ic_grid_off),
+                    contentDescription = null,
+                    tint = if (state.showGrid) AppTheme.colors.orange else AppTheme.colors.contentConstant
+                )
+                Icon(
+                    modifier = Modifier
+                        .noRippleClickable { onUiAction(CameraUiAction.SwitchExposureMenu) }
+                        .padding(16.dp)
+                        .size(24.dp),
+                    painter = painterResource(R.drawable.ic_exposure),
+                    contentDescription = null,
+                    tint = if (state.exposureCompensationIndex != null) AppTheme.colors.orange else AppTheme.colors.contentConstant
+                )
+            }
+            surfaceRequest?.let { surfaceRequest ->
+                val coordinateTransformer = remember { MutableCoordinateTransformer() }
 
-                    Box(modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(0.75f)) {
-                        CameraXViewfinder(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .pointerInput(Unit) {
-                                    detectTapGestures {
-                                        with(coordinateTransformer) {
-                                            val surfaceCoords = it.transform()
-                                            surfaceRequest.resolution
-                                            surfaceCoords.x
-                                            surfaceCoords.y
-                                        }
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(0.75f)) {
+                    CameraXViewfinder(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectTapGestures {
+                                    with(coordinateTransformer) {
+                                        val surfaceCoords = it.transform()
+                                        surfaceRequest.resolution
+                                        surfaceCoords.x
+                                        surfaceCoords.y
                                     }
-                                },
-                            surfaceRequest = surfaceRequest,
-                            implementationMode = ImplementationMode.EXTERNAL,
-                            coordinateTransformer = coordinateTransformer
-                        )
-                        if (state.showGrid) {
-                            CameraGridOverlay(Modifier.fillMaxSize())
-                        }
-                        Row(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            state.zoomLevels.forEach {
-                                ZoomButton(
-                                    value = it.first,
-                                    isActive = it.second,
-                                    onClick = { onUiAction(CameraUiAction.OnZoomSelected(it.first)) }
-                                )
-                            }
+                                }
+                            },
+                        surfaceRequest = surfaceRequest,
+                        implementationMode = ImplementationMode.EXTERNAL,
+                        coordinateTransformer = coordinateTransformer
+                    )
+                    if (state.showGrid) {
+                        CameraGridOverlay(Modifier.fillMaxSize())
+                    }
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        state.zoomLevels.forEach {
+                            ZoomButton(
+                                value = it.first,
+                                isActive = it.second,
+                                onClick = { onUiAction(CameraUiAction.OnZoomSelected(it.first)) }
+                            )
                         }
                     }
                 }
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CameraShotButton {  }
-                }
+            }
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CameraShotButton {  }
             }
         }
     }
