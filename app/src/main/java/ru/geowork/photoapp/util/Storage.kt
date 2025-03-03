@@ -3,6 +3,7 @@ package ru.geowork.photoapp.util
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
@@ -31,6 +32,22 @@ fun Context.createFileInDocuments(fileName: String, path: String, ext: String): 
         put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/$APP_FOLDER_NAME/$path${if (ext.isEmpty()) "/$fileName" else ""}")
     }
     return contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+}
+
+fun Context.saveImageToDocuments(bitmap: Bitmap, path: String, fileName: String) {
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, "$fileName.jpg")
+        put(MediaStore.Images.Media.MIME_TYPE, MIME_TYPE_IMAGE)
+        put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/$APP_FOLDER_NAME/$path")
+    }
+
+    val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+    imageUri?.let { uri ->
+        contentResolver.openOutputStream(uri)?.use { outputStream ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+        }
+    }
 }
 
 fun Context.getFilesFromDocuments(path: String): List<FolderItem> {

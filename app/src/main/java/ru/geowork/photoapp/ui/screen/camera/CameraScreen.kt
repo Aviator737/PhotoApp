@@ -8,27 +8,25 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import ru.geowork.photoapp.ui.screen.camera.components.Camera
-
-
-const val CAMERA_SCREEN_ID = "camera_screen"
 
 fun NavGraphBuilder.cameraScreen(
     onBack: () -> Unit
 ) {
-
-    composable(CAMERA_SCREEN_ID) {
-        val viewModel: CameraViewModel = hiltViewModel()
+    composable<CameraPayload> { backStackEntry ->
+        val payload = backStackEntry.toRoute<CameraPayload>()
+        val viewModel = hiltViewModel<CameraViewModel, CameraAssistedFactory> { it.create(payload) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val uiEvents by viewModel.uiEvents.collectAsStateWithLifecycle()
 
-        uiEvents.firstOrNull()?.let { uiEvent ->
-            LaunchedEffect(uiEvent) {
-                when(uiEvent) {
+        uiEvents.firstOrNull()?.let { event ->
+            LaunchedEffect(uiEvents.firstOrNull()) {
+                when(event) {
                     CameraUiEvent.NavigateBack -> onBack()
                 }
             }
-            viewModel.onUiEventHandled(uiEvent)
+            viewModel.onUiEventHandled(event)
         }
 
         Camera(
@@ -39,7 +37,11 @@ fun NavGraphBuilder.cameraScreen(
 }
 
 fun NavController.navigateToCameraScreen(
+    payload: CameraPayload,
     builder: NavOptionsBuilder.() -> Unit = {}
 ) {
-    navigate(CAMERA_SCREEN_ID, builder)
+    navigate(
+        route = payload,
+        builder = builder
+    )
 }

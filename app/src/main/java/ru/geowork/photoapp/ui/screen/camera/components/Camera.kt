@@ -1,13 +1,19 @@
 package ru.geowork.photoapp.ui.screen.camera.components
 
 import android.Manifest
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Rational
 import android.view.Surface
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
 import androidx.camera.core.UseCaseGroup
 import androidx.camera.core.ViewPort
@@ -15,14 +21,15 @@ import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
-import androidx.camera.viewfinder.compose.MutableCoordinateTransformer
 import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +37,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,13 +50,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.R
 import ru.geowork.photoapp.ui.components.WithPermissions
@@ -66,40 +81,61 @@ fun Camera(
 
     val cameraScope = rememberCoroutineScope()
 
-    var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
+    var surfaceMeteringPointFactory by remember { mutableStateOf<SurfaceOrientedMeteringPointFactory?>(null) }
+    var focusCoordinates by remember { mutableStateOf<Offset?>(null) }
+    var showFocusPoint by remember { mutableStateOf(false) }
 
+    var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
+    var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
 
     state.zoomLevels.firstOrNull { it.second }?.let { cameraControl?.setZoomRatio(it.first) }
+
+    val itemsScrollState = rememberLazyListState()
+
+    LaunchedEffect(state.items.size) {
+        if (state.items.isNotEmpty()) {
+            itemsScrollState.animateScrollToItem(state.items.lastIndex)
+        }
+    }
 
     LaunchedEffect(Unit) {
         cameraScope.launch {
             val cameraProvider = ProcessCameraProvider.awaitInstance(context)
 
-            val resolution = ResolutionSelector.Builder()
+            val resolutionSelector = ResolutionSelector.Builder()
                 .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
                 .build()
 
-            val preview = Preview.Builder()
-                .setResolutionSelector(resolution)
+            val previewUseCase = Preview.Builder()
+                .setResolutionSelector(resolutionSelector)
+                .setTargetRotation(Surface.ROTATION_0)
                 .build()
                 .apply {
-                    setSurfaceProvider { newSurfaceRequest -> surfaceRequest = newSurfaceRequest }
+                    setSurfaceProvider { request ->
+                        surfaceRequest = request
+                        surfaceMeteringPointFactory = SurfaceOrientedMeteringPointFactory(
+                            request.resolution.width.toFloat(),
+                            request.resolution.height.toFloat()
+                        )
+                    }
                 }
 
-            val imageCapture = ImageCapture.Builder()
+            val imageCaptureUseCase = ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                .setResolutionSelector(resolution)
+                .setResolutionSelector(resolutionSelector)
+                .setTargetRotation(Surface.ROTATION_0)
                 .build()
 
             val useCaseGroup = UseCaseGroup.Builder()
-                .addUseCase(preview)
-                .addUseCase(imageCapture)
+                .addUseCase(previewUseCase)
+                .addUseCase(imageCaptureUseCase)
                 .setViewPort(ViewPort.Builder(Rational(3, 4), Surface.ROTATION_0).build())
                 .build()
 
             val camera = cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, useCaseGroup)
 
+            imageCapture = imageCaptureUseCase
             cameraControl = camera.cameraControl
 
             onUiAction(
@@ -112,8 +148,8 @@ fun Camera(
             try {
                 awaitCancellation()
             } finally {
-                cameraControl = null
                 cameraProvider.unbindAll()
+                cameraControl = null
             }
         }
     }
@@ -162,8 +198,6 @@ fun Camera(
                 )
             }
             surfaceRequest?.let { surfaceRequest ->
-                val coordinateTransformer = remember { MutableCoordinateTransformer() }
-
                 Box(modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(0.75f)) {
@@ -171,21 +205,30 @@ fun Camera(
                         modifier = Modifier
                             .fillMaxSize()
                             .pointerInput(Unit) {
-                                detectTapGestures {
-                                    with(coordinateTransformer) {
-                                        val surfaceCoords = it.transform()
-                                        surfaceRequest.resolution
-                                        surfaceCoords.x
-                                        surfaceCoords.y
-                                    }
+                                detectTapGestures { tapCoordinates ->
+                                    surfaceMeteringPointFactory
+                                        ?.createPoint(tapCoordinates.x, tapCoordinates.y)
+                                        ?.let {
+                                            cameraControl?.startFocusAndMetering(
+                                                FocusMeteringAction
+                                                    .Builder(it)
+                                                    .build()
+                                            )
+                                            focusCoordinates = tapCoordinates
+                                            showFocusPoint = true
+                                        }
                                 }
                             },
                         surfaceRequest = surfaceRequest,
-                        implementationMode = ImplementationMode.EXTERNAL,
-                        coordinateTransformer = coordinateTransformer
+                        implementationMode = ImplementationMode.EXTERNAL
                     )
                     if (state.showGrid) {
                         CameraGridOverlay(Modifier.fillMaxSize())
+                    }
+                    focusCoordinates?.let { CameraFocusPoint(it, showFocusPoint) }
+                    LaunchedEffect(showFocusPoint) {
+                        delay(1000)
+                        showFocusPoint = false
                     }
                     Row(
                         modifier = Modifier
@@ -204,10 +247,40 @@ fun Camera(
                 }
             }
             Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 40.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CameraShotButton {  }
+                CameraShotButton {
+                    context.takePhoto(
+                        imageCapture = imageCapture,
+                        onError = { println(it) },
+                        onImageSaved = { onUiAction(CameraUiAction.OnPhotoTaken(it)) }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp),
+            state = itemsScrollState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(state.items) { item ->
+                AsyncImage(
+                    model = item.path,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(AppTheme.colors.backgroundModal, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                )
             }
         }
     }
@@ -217,6 +290,25 @@ fun Camera(
 @Composable
 fun PreviewCamera() {
     AppTheme {
-        Camera(CameraUiState()) {}
+        Camera(CameraUiState(), onUiAction = {})
     }
+}
+
+private fun Context.takePhoto(
+    imageCapture: ImageCapture?,
+    onError: (ImageCaptureException) -> Unit,
+    onImageSaved: (Bitmap) -> Unit
+) {
+    val outputFileOptions = ImageCapture.OutputFileOptions.Builder(cacheDir.resolve("temp.jpg")).build()
+    imageCapture?.takePicture(outputFileOptions, mainExecutor,
+        object : ImageCapture.OnImageSavedCallback {
+            override fun onError(error: ImageCaptureException) {
+                onError(error)
+            }
+            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                val bitmap = BitmapFactory.decodeFile(outputFileResults.savedUri?.path)
+                onImageSaved(bitmap)
+            }
+        }
+    )
 }

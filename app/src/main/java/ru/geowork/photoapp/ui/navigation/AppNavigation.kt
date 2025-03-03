@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import ru.geowork.photoapp.ui.screen.auth.authScreen
@@ -53,7 +54,11 @@ fun AppNavigation(
     ) {
         authScreen(
             navigateToMainMenu = {
-                navController.navigateToMainMenuScreen()
+                navController.navigateToMainMenuScreen {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                }
             }
         )
         mainMenuScreen(
@@ -67,7 +72,7 @@ fun AppNavigation(
             onBack = { navController.popBackStack() }
         )
         graveyardsScreen(
-            navigateToCamera = { navController.navigateToCameraScreen() },
+            navigateToCamera = { navController.navigateToCameraScreen(it) },
             onBack = { navController.popBackStack() }
         )
         cameraScreen(

@@ -26,6 +26,7 @@ sealed class FolderItem(
 
     data class PhotoRow(
         override val name: String = "",
-        override val path: String = ""
+        override val path: String = "",
+        val items: List<FolderItem> = listOf()
     ): FolderItem(name = name, path = path)
 }

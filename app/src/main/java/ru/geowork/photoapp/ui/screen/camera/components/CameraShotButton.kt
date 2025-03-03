@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,17 +20,17 @@ fun CameraShotButton(
 ) {
     Box(
         modifier = Modifier
-            .background(AppTheme.colors.contentConstant, RoundedCornerShape(35.dp))
+            .background(AppTheme.colors.contentConstant, CircleShape)
             .size(70.dp)
-            .clip(RoundedCornerShape(35.dp))
+            .clip(CircleShape)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .background(ContentSubPrimaryDark, RoundedCornerShape(30.dp))
+                .background(ContentSubPrimaryDark, CircleShape)
                 .size(60.dp)
-                .clip(RoundedCornerShape(30.dp))
+                .clip(CircleShape)
         )
     }
 }

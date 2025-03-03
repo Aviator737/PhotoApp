@@ -1,21 +1,29 @@
 package ru.geowork.photoapp.ui.screen.camera
 
+import android.graphics.Bitmap
+import androidx.core.net.toFile
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.data.DataStoreRepository
+import ru.geowork.photoapp.data.FilesRepository
+import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.BaseViewModel
-import javax.inject.Inject
-import kotlin.math.max
+import java.io.File
 
-@HiltViewModel
-class CameraViewModel @Inject constructor(
-    private val dataStoreRepository: DataStoreRepository
+@HiltViewModel(assistedFactory = CameraAssistedFactory::class)
+class CameraViewModel @AssistedInject constructor(
+    private val dataStoreRepository: DataStoreRepository,
+    private val filesRepository: FilesRepository,
+    @Assisted private val payload: CameraPayload
 ): BaseViewModel<CameraUiState, CameraUiEvent, CameraUiAction>() {
 
     override val initialUiState: CameraUiState = CameraUiState()
 
     init {
         initSettings()
+        getFolderItems()
     }
 
     override fun handleCoroutineException(e: Throwable) {}
@@ -27,6 +35,7 @@ class CameraViewModel @Inject constructor(
             CameraUiAction.SwitchExposureMenu -> handleSwitchExposureMenu()
             CameraUiAction.SwitchGrid -> handleSwitchGrid()
             CameraUiAction.SwitchHDR -> handleSwitchHdr()
+            is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken(uiAction.bitmap)
             CameraUiAction.NavigateBack -> handleNavigateBack()
         }
     }
@@ -68,6 +77,13 @@ class CameraViewModel @Inject constructor(
         updateUiState { it.copy(isHdrOn = isHdrOn) }
     }
 
+    private fun handleOnPhotoTaken(bitmap: Bitmap) = viewModelScopeErrorHandled.launch {
+        val photosCount = uiState.value.items.size
+        val name = payload.savePath.replace('/', '_') + "_фото$photosCount"
+        filesRepository.saveImage(bitmap, payload.savePath, name)
+        getFolderItems()
+    }
+
     private fun handleNavigateBack() {
         sendUiEvent(CameraUiEvent.NavigateBack)
     }
@@ -84,5 +100,10 @@ class CameraViewModel @Inject constructor(
                 showGrid = showGrid
             )
         }
+    }
+
+    private fun getFolderItems() = viewModelScopeErrorHandled.launch {
+        val folderItems = filesRepository.getFolderItems(payload.savePath)
+        updateUiState { it.copy(items = folderItems) }
     }
 }

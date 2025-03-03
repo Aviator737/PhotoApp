@@ -1,5 +1,6 @@
 package ru.geowork.photoapp.ui.screen.camera
 
+import android.graphics.Bitmap
 import ru.geowork.photoapp.ui.base.UiAction
 
 sealed class CameraUiAction: UiAction {
@@ -11,5 +12,6 @@ sealed class CameraUiAction: UiAction {
     data class OnZoomSelected(val value: Float): CameraUiAction()
     data object SwitchGrid: CameraUiAction()
     data object SwitchExposureMenu: CameraUiAction()
+    data class OnPhotoTaken(val bitmap: Bitmap): CameraUiAction()
     data object NavigateBack: CameraUiAction()
 }

@@ -6,6 +6,7 @@ import ru.geowork.photoapp.data.FilesRepository
 import ru.geowork.photoapp.data.GraveyardsRepository
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.BaseViewModel
+import ru.geowork.photoapp.ui.screen.camera.CameraPayload
 import javax.inject.Inject
 
 @HiltViewModel
@@ -183,7 +184,7 @@ class GraveyardsViewModel @Inject constructor(
 //            path = photoRow.path
 //        )
 //        val uri = filesRepository.createFolderItem(item)
-        sendUiEvent(GraveyardsUiEvent.NavigateToCamera)
+        sendUiEvent(GraveyardsUiEvent.NavigateToCamera(CameraPayload(photoRow.path)))
     }
 
     private fun handleOnRepeatPhoto() {

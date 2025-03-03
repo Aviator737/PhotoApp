@@ -1,6 +1,7 @@
 package ru.geowork.photoapp.data
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -9,6 +10,7 @@ import ru.geowork.photoapp.di.DispatcherIo
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.util.createFileInDocuments
 import ru.geowork.photoapp.util.getFilesFromDocuments
+import ru.geowork.photoapp.util.saveImageToDocuments
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,6 +37,10 @@ class FilesRepository @Inject constructor(
 
     suspend fun getFolderItems(path: String) = withContext(dispatcherIo) {
         context.getFilesFromDocuments("${getAccountFolder()}/$path")
+    }
+
+    suspend fun saveImage(bitmap: Bitmap, path: String, name: String) = withContext(dispatcherIo) {
+        context.saveImageToDocuments(bitmap, "${getAccountFolder()}/$path", name)
     }
 
     private suspend fun getAccountFolder() = dataStoreRepository.getPhotographName()

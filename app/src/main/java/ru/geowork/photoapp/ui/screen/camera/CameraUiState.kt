@@ -8,5 +8,5 @@ data class CameraUiState(
     val exposureCompensationIndex: Int? = null,
     val zoomLevels: List<Pair<Float, Boolean>> = listOf(),
     val showGrid: Boolean = false,
-    val photoRow: FolderItem.PhotoRow? = null
+    val items: List<FolderItem> = listOf()
 ): UiState
