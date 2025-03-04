@@ -42,10 +42,4 @@
 
     <string name="settings_image_quality_title">Качество изображений</string>
     <string name="settings_image_quality_hint">10–100</string>
-
-    <plurals name="plurals_test">
-        <item quantity="one">%1$d бонус</item>
-        <item quantity="few">%1$d бонуса</item>
-        <item quantity="other">%1$d бонусов</item>
-    </plurals>
 </resources>

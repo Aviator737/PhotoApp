@@ -9,7 +9,7 @@ data class GraveyardsUiState(
     val isEditMode: Boolean = false,
 
     val folderLevel: FolderLevel,
-    val parentFolders: List<String> = listOf(),
+    val parentFolders: List<FolderItem.Folder> = listOf(),
     val folderItems: List<FolderItem> = listOf(),
 
     val newItemDialog: FolderItem? = null,

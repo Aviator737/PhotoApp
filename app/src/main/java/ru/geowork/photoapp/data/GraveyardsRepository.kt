@@ -5,9 +5,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GraveyardsRepository @Inject constructor(
-    private val filesRepository: FilesRepository
-) {
+class GraveyardsRepository @Inject constructor() {
     fun getGraveyards() = listOf(
         Graveyard("Домодедовское", "Dom"),
         Graveyard("Даниловское (Центральное)", "DanC"),

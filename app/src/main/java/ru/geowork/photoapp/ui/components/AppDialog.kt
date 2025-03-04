@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import ru.geowork.photoapp.R
 import ru.geowork.photoapp.ui.theme.AppTheme
 import ru.geowork.photoapp.util.noRippleClickable
@@ -26,6 +27,7 @@ fun AppDialog(
     title: String? = null,
     dismissButtonText: String = stringResource(R.string.cancel),
     confirmButtonText: String = stringResource(R.string.save),
+    properties: DialogProperties = DialogProperties(),
     dismissButtonColors: ButtonColors = ButtonDefaults.buttonColors(
         backgroundColor = AppTheme.colors.contentBackground,
         contentColor = AppTheme.colors.contentPrimary
@@ -38,7 +40,10 @@ fun AppDialog(
     onConfirm: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss ?: {}) {
+    Dialog(
+        properties = properties,
+        onDismissRequest = onDismiss ?: {}
+    ) {
 
         val focusManager = LocalFocusManager.current
 

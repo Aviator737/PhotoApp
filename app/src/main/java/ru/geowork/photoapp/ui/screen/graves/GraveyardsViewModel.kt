@@ -1,5 +1,6 @@
 package ru.geowork.photoapp.ui.screen.graves
 
+import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.data.FilesRepository
@@ -31,6 +32,8 @@ class GraveyardsViewModel @Inject constructor(
 
             GraveyardsUiAction.OnUpdateFolderItems -> updateFolderItems()
 
+            is GraveyardsUiAction.OnAddExternalPicture -> handleOnAddExternalPicture(uiAction.uri)
+
             is GraveyardsUiAction.OnParentFolderClick -> handleOnParentFolderClick(uiAction.item)
             is GraveyardsUiAction.OnFolderItemClick -> handleOnFolderItemClick(uiAction.item)
 
@@ -54,6 +57,10 @@ class GraveyardsViewModel @Inject constructor(
         updateUiState {
             it.copy(folderItems = folderItems)
         }
+    }
+
+    private fun handleOnAddExternalPicture(uri: Uri) {
+
     }
 
     private fun handleSetIsEditMode(value: Boolean) {
@@ -87,7 +94,7 @@ class GraveyardsViewModel @Inject constructor(
         }
     }
 
-    private fun handleOnParentFolderClick(item: String) = viewModelScopeErrorHandled.launch {
+    private fun handleOnParentFolderClick(item: FolderItem.Folder) = viewModelScopeErrorHandled.launch {
         val index = parentFolders.indexOf(item)
         if (parentFolders.size-1 != index && index != -1) {
             val newParentFolders = parentFolders.subList(0, index+1)
@@ -114,7 +121,7 @@ class GraveyardsViewModel @Inject constructor(
     }
 
     private fun handleFolderClick(item: FolderItem.Folder) = viewModelScopeErrorHandled.launch {
-        val newParentFolders = parentFolders.plusElement(item.name)
+        val newParentFolders = parentFolders.plusElement(item)
         val newFolderLevel = getFolderLevel(newParentFolders.size)
         val folderItems = getFolderItems(newParentFolders, newFolderLevel)
         updateUiState { state ->
@@ -127,15 +134,27 @@ class GraveyardsViewModel @Inject constructor(
     }
 
     private fun handleOnAddFolderClick() {
-        updateUiState { it.copy(newItemDialog = FolderItem.Folder(name = "", path = parentFolders.joinToString("/"))) }
+        updateUiState { state ->
+            state.copy(
+                newItemDialog = FolderItem.Folder(name = "", path = parentFolders.joinToString("/") { it.name })
+            )
+        }
     }
 
     private fun handleOnAddImageFileClick() {
-        updateUiState { it.copy(newItemDialog = FolderItem.ImageFile(name = "", path = parentFolders.joinToString("/"))) }
+        updateUiState { state ->
+            state.copy(
+                newItemDialog = FolderItem.ImageFile(name = "", path = parentFolders.joinToString("/") { it.name })
+            )
+        }
     }
 
     private fun handleOnAddTextFileClick() {
-        updateUiState { it.copy(newItemDialog = FolderItem.TextFile(name = "", path = parentFolders.joinToString("/"))) }
+        updateUiState { state ->
+            state.copy(
+                newItemDialog = FolderItem.TextFile(name = "", path = parentFolders.joinToString("/") { it.name })
+            )
+        }
     }
 
     private fun handleOnItemNameInput(name: String) = updateUiState {
@@ -196,8 +215,8 @@ class GraveyardsViewModel @Inject constructor(
 
     private suspend fun getFolderItems(): List<FolderItem> = getFolderItems(parentFolders, uiState.value.folderLevel)
 
-    private suspend fun getFolderItems(parents: List<String>, folderLevel: FolderLevel): List<FolderItem> =
-        getFolderItems(parents.joinToString("/"), folderLevel)
+    private suspend fun getFolderItems(parents: List<FolderItem.Folder>, folderLevel: FolderLevel): List<FolderItem> =
+        getFolderItems(parents.joinToString("/") { it.name }, folderLevel)
 
     private suspend fun getFolderItems(path: String, folderLevel: FolderLevel) = when(folderLevel) {
         FolderLevel.GRAVEYARDS -> getRootFolderItems()
@@ -215,7 +234,7 @@ class GraveyardsViewModel @Inject constructor(
     }
 
     private suspend fun getRootFolderItems(): List<FolderItem> {
-        val rootGraveyards = graveyardsRepository.getGraveyards().map { FolderItem.Folder(name = it.name) }
+        val rootGraveyards = graveyardsRepository.getGraveyards().map { FolderItem.Folder(name = it.prefix, visibleName = it.name) }
         val folderItems = filesRepository.getFolderItems("")
         val foldersWithoutDefaults = folderItems.filterNot { root -> rootGraveyards.any { it.name == root.name } }
         return rootGraveyards.plus(foldersWithoutDefaults)

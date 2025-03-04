@@ -19,6 +19,7 @@ sealed class FolderItem(
 
     data class Folder(
         override val name: String = "",
+        val visibleName: String? = null,
         override val path: String = "",
         override val fullPath: String = ""
     ): FolderItem(name = name, path = path, fullPath = fullPath)

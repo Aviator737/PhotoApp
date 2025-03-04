@@ -24,10 +24,10 @@ import ru.geowork.photoapp.ui.theme.AppTheme
 @Composable
 fun FileManager(
     modifier: Modifier = Modifier,
-    parentFolders: List<String>,
+    parentFolders: List<FolderItem.Folder>,
     folderItems: List<FolderItem>,
     onTakePhotoClick: (FolderItem.PhotoRow) -> Unit,
-    onParentFolderClick: (String) -> Unit,
+    onParentFolderClick: (FolderItem.Folder) -> Unit,
     onFolderItemClick: (FolderItem) -> Unit,
     createButtons: @Composable () -> Unit
 ) {
@@ -46,7 +46,8 @@ fun FileManager(
             verticalAlignment = Alignment.CenterVertically
         ) {
             itemsIndexed(parentFolders) { i, parentFolder ->
-                Chip(parentFolder) { onParentFolderClick(parentFolder) }
+                val name = parentFolder.visibleName ?: parentFolder.name
+                Chip(name) { onParentFolderClick(parentFolder) }
                 if (i+1 < parentFolders.size) {
                     Icon(
                         modifier = Modifier.padding(horizontal = 4.dp).size(24.dp),
@@ -72,7 +73,7 @@ fun FileManager(
                         onPhotoClick = { onFolderItemClick(it) }
                     )
                     else -> ListItemWithIcon(
-                        name = item.name,
+                        name = if (item is FolderItem.Folder && item.visibleName != null) item.visibleName else item.name,
                         icon = when (item) {
                             is FolderItem.Folder -> painterResource(R.drawable.folder)
                             is FolderItem.ImageFile -> painterResource(R.drawable.ic_attachment)

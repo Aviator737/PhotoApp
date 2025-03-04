@@ -33,7 +33,7 @@ fun Graveyards(
 
     val pickPictureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { imageUri ->
         if (imageUri != null) {
-            // Update the state with the Uri
+            onUiAction(GraveyardsUiAction.OnAddExternalPicture(imageUri))
         }
     }
 

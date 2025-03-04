@@ -1,5 +1,6 @@
 package ru.geowork.photoapp.ui.screen.graves
 
+import android.net.Uri
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.UiAction
 
@@ -11,7 +12,9 @@ sealed class GraveyardsUiAction: UiAction {
 
     data object OnUpdateFolderItems: GraveyardsUiAction()
 
-    data class OnParentFolderClick(val item: String): GraveyardsUiAction()
+    data class OnAddExternalPicture(val uri: Uri): GraveyardsUiAction()
+
+    data class OnParentFolderClick(val item: FolderItem.Folder): GraveyardsUiAction()
     data class OnFolderItemClick(val item: FolderItem): GraveyardsUiAction()
 
     data object OnAddFolderClick: GraveyardsUiAction()
