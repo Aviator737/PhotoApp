@@ -31,8 +31,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,6 +48,7 @@ fun Input(
     endIcon: Painter? = null,
     singleLine: Boolean = true,
     enabled: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Unspecified,
     modifier: Modifier = Modifier,
     onInput: (String) -> Unit = {}
 ) {
@@ -81,7 +82,7 @@ fun Input(
             textFieldValueState = it
             onInput(it.text)
         },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = keyboardType),
         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
         singleLine = singleLine,
         enabled = enabled,

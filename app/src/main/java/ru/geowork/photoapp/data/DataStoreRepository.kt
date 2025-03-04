@@ -3,7 +3,6 @@ package ru.geowork.photoapp.data
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -35,6 +34,9 @@ class DataStoreRepository @Inject constructor(
     suspend fun saveCameraExposure(value: Int) { dataStore.edit { it[CAMERA_EXPOSURE_COMPENSATION_INDEX] = value } }
     suspend fun saveCameraZoom(value: Float) { dataStore.edit { it[CAMERA_ZOOM] = value } }
 
+    suspend fun getImageQuality(): Int = dataStore.data.map { it[IMAGE_QUALITY] }.firstOrNull() ?: 80
+    suspend fun saveImageQuality(value: Int) { dataStore.edit { it[IMAGE_QUALITY] = value } }
+
     companion object {
         private val PHOTOGRAPH_NAME = stringPreferencesKey("photograph_name")
         private val SUPERVISOR_NAME = stringPreferencesKey("supervisor_name")
@@ -43,5 +45,7 @@ class DataStoreRepository @Inject constructor(
         private val CAMERA_HDR_ON = booleanPreferencesKey("camera_hdr_on")
         private val CAMERA_EXPOSURE_COMPENSATION_INDEX = intPreferencesKey("camera_exposure_compensation_index")
         private val CAMERA_ZOOM = floatPreferencesKey("camera_zoom")
+
+        private val IMAGE_QUALITY = intPreferencesKey("image_quality")
     }
 }

@@ -67,8 +67,9 @@ fun FileManager(
                 when(item) {
                     is FolderItem.PhotoRow -> PhotoRow(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        name = item.name,
-                        onTakePhotoClick = { onTakePhotoClick(item) }
+                        photoRow = item,
+                        onTakePhotoClick = { onTakePhotoClick(item) },
+                        onPhotoClick = { onFolderItemClick(it) }
                     )
                     else -> ListItemWithIcon(
                         name = item.name,

@@ -36,7 +36,7 @@ class FilesRepository @Inject constructor(
     }
 
     suspend fun getFolderItems(path: String) = withContext(dispatcherIo) {
-        context.getFilesFromDocuments("${getAccountFolder()}/$path")
+        context.getFilesFromDocuments("${getAccountFolder()}/$path", path)
     }
 
     suspend fun saveImage(bitmap: Bitmap, path: String, name: String) = withContext(dispatcherIo) {

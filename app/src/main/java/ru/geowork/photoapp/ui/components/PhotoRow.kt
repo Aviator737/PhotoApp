@@ -13,24 +13,39 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import ru.geowork.photoapp.R
+import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.theme.AppTheme
 
 @Composable
 fun PhotoRow(
     modifier: Modifier = Modifier,
-    name: String,
-    onTakePhotoClick: () -> Unit
+    photoRow: FolderItem.PhotoRow,
+    onTakePhotoClick: () -> Unit,
+    onPhotoClick: (FolderItem.ImageFile) -> Unit
 ) {
+    val itemsScrollState = rememberLazyListState()
+
+    LaunchedEffect(photoRow.items.size) {
+        if (photoRow.items.isNotEmpty()) {
+            itemsScrollState.animateScrollToItem(photoRow.items.lastIndex)
+        }
+    }
+
     Column(
         modifier = modifier
             .border(
@@ -43,16 +58,28 @@ fun PhotoRow(
         Row {
             Text(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                text = name,
+                text = photoRow.name,
                 style = AppTheme.typography.medium16,
                 color = AppTheme.colors.contentPrimary
             )
         }
         LazyRow(
             modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
+            state = itemsScrollState,
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            items(photoRow.items) { item ->
+                AsyncImage(
+                    model = item.fullPath,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clickable { if (item is FolderItem.ImageFile) onPhotoClick(item) }
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+            }
             item {
                 Box(
                     modifier = Modifier.size(64.dp)

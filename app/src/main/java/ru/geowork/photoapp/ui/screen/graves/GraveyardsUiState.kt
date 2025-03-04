@@ -12,5 +12,6 @@ data class GraveyardsUiState(
     val parentFolders: List<String> = listOf(),
     val folderItems: List<FolderItem> = listOf(),
 
-    val newItemDialog: FolderItem? = null
+    val newItemDialog: FolderItem? = null,
+    val photoView: FolderItem.ImageFile? = null
 ): UiState

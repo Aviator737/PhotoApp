@@ -4,6 +4,7 @@ import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.UiState
 
 data class CameraUiState(
+    val imageQuality: Int? = null,
     val isHdrOn: Boolean = false,
     val exposureCompensationIndex: Int? = null,
     val zoomLevels: List<Pair<Float, Boolean>> = listOf(),

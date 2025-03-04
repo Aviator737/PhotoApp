@@ -15,6 +15,8 @@ import ru.geowork.photoapp.ui.screen.graves.graveyardsScreen
 import ru.geowork.photoapp.ui.screen.graves.navigateToGraveyardsScreen
 import ru.geowork.photoapp.ui.screen.mainmenu.mainMenuScreen
 import ru.geowork.photoapp.ui.screen.mainmenu.navigateToMainMenuScreen
+import ru.geowork.photoapp.ui.screen.settings.navigateToSettingsScreen
+import ru.geowork.photoapp.ui.screen.settings.settingsScreen
 
 @Composable
 fun AppNavigation(
@@ -62,11 +64,9 @@ fun AppNavigation(
             }
         )
         mainMenuScreen(
-            navigateToGraves = {
-                navController.navigateToGraveyardsScreen()
-            },
+            navigateToGraves = { navController.navigateToGraveyardsScreen() },
             navigateToPoles = {},
-            navigateToSettings = {}
+            navigateToSettings = { navController.navigateToSettingsScreen() }
         )
         folderSyncScreen(
             onBack = { navController.popBackStack() }
@@ -78,5 +78,6 @@ fun AppNavigation(
         cameraScreen(
             onBack = { navController.popBackStack() }
         )
+        settingsScreen()
     }
 }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Rational
+import android.util.Size
 import android.view.Surface
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
@@ -19,6 +20,7 @@ import androidx.camera.core.UseCaseGroup
 import androidx.camera.core.ViewPort
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.camera.viewfinder.core.ImplementationMode
@@ -38,7 +40,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
@@ -53,7 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -99,57 +100,67 @@ fun Camera(
         }
     }
 
-    LaunchedEffect(Unit) {
-        cameraScope.launch {
-            val cameraProvider = ProcessCameraProvider.awaitInstance(context)
+    if (state.imageQuality != null) {
+        LaunchedEffect(Unit) {
+            cameraScope.launch {
+                val cameraProvider = ProcessCameraProvider.awaitInstance(context)
 
-            val resolutionSelector = ResolutionSelector.Builder()
-                .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
-                .build()
-
-            val previewUseCase = Preview.Builder()
-                .setResolutionSelector(resolutionSelector)
-                .setTargetRotation(Surface.ROTATION_0)
-                .build()
-                .apply {
-                    setSurfaceProvider { request ->
-                        surfaceRequest = request
-                        surfaceMeteringPointFactory = SurfaceOrientedMeteringPointFactory(
-                            request.resolution.width.toFloat(),
-                            request.resolution.height.toFloat()
+                val resolutionSelector = ResolutionSelector.Builder()
+                    .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
+                    .setResolutionStrategy(
+                        ResolutionStrategy(
+                            Size(1920, 1080),
+                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER
                         )
+                    )
+                    .build()
+
+                val previewUseCase = Preview.Builder()
+                    .setResolutionSelector(resolutionSelector)
+                    .build()
+                    .apply {
+                        setSurfaceProvider { request ->
+                            surfaceRequest = request
+                            surfaceMeteringPointFactory = SurfaceOrientedMeteringPointFactory(
+                                request.resolution.width.toFloat(),
+                                request.resolution.height.toFloat()
+                            )
+                        }
                     }
-                }
 
-            val imageCaptureUseCase = ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                .setResolutionSelector(resolutionSelector)
-                .setTargetRotation(Surface.ROTATION_0)
-                .build()
+                val imageCaptureUseCase = ImageCapture.Builder()
+                    .setResolutionSelector(resolutionSelector)
+                    .setJpegQuality(state.imageQuality)
+                    .build()
 
-            val useCaseGroup = UseCaseGroup.Builder()
-                .addUseCase(previewUseCase)
-                .addUseCase(imageCaptureUseCase)
-                .setViewPort(ViewPort.Builder(Rational(3, 4), Surface.ROTATION_0).build())
-                .build()
+                val useCaseGroup = UseCaseGroup.Builder()
+                    .addUseCase(previewUseCase)
+                    .addUseCase(imageCaptureUseCase)
+                    .setViewPort(ViewPort.Builder(Rational(3, 4), Surface.ROTATION_0).build())
+                    .build()
 
-            val camera = cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, useCaseGroup)
-
-            imageCapture = imageCaptureUseCase
-            cameraControl = camera.cameraControl
-
-            onUiAction(
-                CameraUiAction.OnZoomLevelsResolved(
-                    minZoom = camera.cameraInfo.zoomState.value?.minZoomRatio ?: 1f,
-                    maxZoom = camera.cameraInfo.zoomState.value?.maxZoomRatio ?: 1f
+                val camera = cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    useCaseGroup
                 )
-            )
 
-            try {
-                awaitCancellation()
-            } finally {
-                cameraProvider.unbindAll()
-                cameraControl = null
+                imageCapture = imageCaptureUseCase
+                cameraControl = camera.cameraControl
+
+                onUiAction(
+                    CameraUiAction.OnZoomLevelsResolved(
+                        minZoom = camera.cameraInfo.zoomState.value?.minZoomRatio ?: 1f,
+                        maxZoom = camera.cameraInfo.zoomState.value?.maxZoomRatio ?: 1f
+                    )
+                )
+
+                try {
+                    awaitCancellation()
+                } finally {
+                    cameraProvider.unbindAll()
+                    cameraControl = null
+                }
             }
         }
     }
@@ -274,11 +285,11 @@ fun Camera(
         ) {
             items(state.items) { item ->
                 AsyncImage(
-                    model = item.path,
+                    model = item.fullPath,
                     contentDescription = null,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(48.dp)
-                        .background(AppTheme.colors.backgroundModal, RoundedCornerShape(8.dp))
                         .clip(RoundedCornerShape(8.dp))
                 )
             }

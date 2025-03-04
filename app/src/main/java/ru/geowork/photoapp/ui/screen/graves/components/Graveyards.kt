@@ -14,10 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import ru.geowork.photoapp.R
 import ru.geowork.photoapp.ui.components.ButtonLarge
 import ru.geowork.photoapp.ui.components.Chip
 import ru.geowork.photoapp.ui.components.FileManager
+import ru.geowork.photoapp.ui.components.PhotoViewerDialog
 import ru.geowork.photoapp.ui.screen.graves.FolderLevel
 import ru.geowork.photoapp.ui.screen.graves.GraveyardsUiAction
 import ru.geowork.photoapp.ui.screen.graves.GraveyardsUiState
@@ -33,6 +35,15 @@ fun Graveyards(
         if (imageUri != null) {
             // Update the state with the Uri
         }
+    }
+
+    LifecycleResumeEffect(Unit) {
+        onUiAction(GraveyardsUiAction.OnUpdateFolderItems)
+        onPauseOrDispose {}
+    }
+
+    state.photoView?.let {
+        PhotoViewerDialog(it) { onUiAction(GraveyardsUiAction.OnClosePhoto) }
     }
 
     GravesWrapper(

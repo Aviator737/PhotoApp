@@ -45,20 +45,21 @@ fun Context.saveImageToDocuments(bitmap: Bitmap, path: String, fileName: String)
 
     imageUri?.let { uri ->
         contentResolver.openOutputStream(uri)?.use { outputStream ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         }
     }
 }
 
-fun Context.getFilesFromDocuments(path: String): List<FolderItem> {
+fun Context.getFilesFromDocuments(path: String, cleanPath: String): List<FolderItem> {
     val folderItems = mutableListOf<FolderItem>()
     val fullPath = File("$APP_FILES_DIRECTORY/$path")
     if (fullPath.exists()) {
         fullPath.listFiles()?.forEach { file ->
             val type = getFileType(file)
             val item = when(type) {
-                null -> FolderItem.Folder(name = file.name, path = file.path)
-                else -> FolderItem.Unknown(name = file.name, path = file.path)
+                null -> FolderItem.Folder(name = file.name, path = cleanPath, fullPath = file.path)
+                MIME_TYPE_IMAGE -> FolderItem.ImageFile(name = file.name, path = cleanPath, fullPath = file.path)
+                else -> FolderItem.Unknown(name = file.name, path = cleanPath, fullPath = file.path)
             }
             folderItems.add(item)
         }

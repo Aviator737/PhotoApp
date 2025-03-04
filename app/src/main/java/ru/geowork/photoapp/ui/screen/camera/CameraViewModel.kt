@@ -1,16 +1,14 @@
 package ru.geowork.photoapp.ui.screen.camera
 
 import android.graphics.Bitmap
-import androidx.core.net.toFile
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.data.FilesRepository
-import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.BaseViewModel
-import java.io.File
+import ru.geowork.photoapp.util.rotate
 
 @HiltViewModel(assistedFactory = CameraAssistedFactory::class)
 class CameraViewModel @AssistedInject constructor(
@@ -79,8 +77,9 @@ class CameraViewModel @AssistedInject constructor(
 
     private fun handleOnPhotoTaken(bitmap: Bitmap) = viewModelScopeErrorHandled.launch {
         val photosCount = uiState.value.items.size
-        val name = payload.savePath.replace('/', '_') + "_фото$photosCount"
-        filesRepository.saveImage(bitmap, payload.savePath, name)
+        val name = payload.savePath.replace('/', '_') + "_$photosCount"
+        val rotatedBitmap = bitmap.rotate(90f)
+        filesRepository.saveImage(rotatedBitmap, payload.savePath, name)
         getFolderItems()
     }
 
@@ -89,12 +88,14 @@ class CameraViewModel @AssistedInject constructor(
     }
 
     private fun initSettings() = viewModelScopeErrorHandled.launch {
+        val imageQuality = dataStoreRepository.getImageQuality()
         val showGrid = dataStoreRepository.getCameraShowGrid() ?: false
         val isHdrOn = dataStoreRepository.getCameraHdrOn() ?: false
         val exposureCompensationIndex = dataStoreRepository.getCameraExposureCompensationIndex()
 
         updateUiState {
             it.copy(
+                imageQuality = imageQuality,
                 isHdrOn = isHdrOn,
                 exposureCompensationIndex = exposureCompensationIndex,
                 showGrid = showGrid

@@ -9,6 +9,8 @@ sealed class GraveyardsUiAction: UiAction {
     data class SetIsEditMode(val value: Boolean): GraveyardsUiAction()
     data object OnBack: GraveyardsUiAction()
 
+    data object OnUpdateFolderItems: GraveyardsUiAction()
+
     data class OnParentFolderClick(val item: String): GraveyardsUiAction()
     data class OnFolderItemClick(val item: FolderItem): GraveyardsUiAction()
 
@@ -22,4 +24,6 @@ sealed class GraveyardsUiAction: UiAction {
     data class OnTakePhotoClick(val photoRow: FolderItem.PhotoRow): GraveyardsUiAction()
     data object OnRepeatPhoto: GraveyardsUiAction()
     data object OnStopTakePhotos: GraveyardsUiAction()
+
+    data object OnClosePhoto: GraveyardsUiAction()
 }
