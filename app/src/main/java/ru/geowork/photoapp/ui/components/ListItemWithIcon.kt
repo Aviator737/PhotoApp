@@ -28,6 +28,7 @@ fun ListItemWithIcon(
 ) {
     Row(
         modifier = Modifier
+            .fillMaxWidth()
             .clickable { onClick(name) }
             .then(modifier)
             .padding(
@@ -35,8 +36,7 @@ fun ListItemWithIcon(
                 end = 12.dp,
                 top = 14.dp,
                 bottom = 14.dp
-            )
-            .fillMaxWidth(),
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

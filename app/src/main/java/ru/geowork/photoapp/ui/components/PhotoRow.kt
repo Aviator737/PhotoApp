@@ -75,9 +75,9 @@ fun PhotoRow(
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .clickable { if (item is FolderItem.ImageFile) onPhotoClick(item) }
                         .size(64.dp)
                         .clip(RoundedCornerShape(12.dp))
+                        .clickable { if (item is FolderItem.ImageFile) onPhotoClick(item) }
                 )
             }
             item {
