@@ -25,7 +25,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0.6"
+        versionName = "1.0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -110,14 +110,16 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.extensions)
 
+    //Images
+    implementation(libs.coil.compose)
+    implementation(libs.exifinterface)
+
     // DI
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     kapt(libs.hilt.compiler)
     kaptAndroidTest(libs.hilt.android.compiler)
     kaptTest(libs.hilt.android.compiler)
-
-    implementation(libs.coil.compose)
 
     implementation(libs.kotlinx.serialization.json)
 

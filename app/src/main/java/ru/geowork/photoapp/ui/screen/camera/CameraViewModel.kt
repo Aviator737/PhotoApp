@@ -1,6 +1,7 @@
 package ru.geowork.photoapp.ui.screen.camera
 
 import android.graphics.Bitmap
+import androidx.exifinterface.media.ExifInterface
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -9,8 +10,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.data.FilesRepository
+import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.BaseViewModel
-import ru.geowork.photoapp.util.rotate
+import ru.geowork.photoapp.util.rotateIfRequired
 
 @HiltViewModel(assistedFactory = CameraAssistedFactory::class)
 class CameraViewModel @AssistedInject constructor(
@@ -42,7 +44,7 @@ class CameraViewModel @AssistedInject constructor(
             is CameraUiAction.OnZoomSelected -> handleOnZoomSelected(uiAction.value)
             CameraUiAction.SwitchExposureMenu -> handleSwitchExposureMenu()
             CameraUiAction.SwitchGrid -> handleSwitchGrid()
-            is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken(uiAction.bitmap)
+            is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken(uiAction.bitmap, uiAction.exif)
             CameraUiAction.NavigateBack -> handleNavigateBack()
         }
     }
@@ -116,11 +118,14 @@ class CameraViewModel @AssistedInject constructor(
         updateUiState { it.copy(showGrid = showGrid) }
     }
 
-    private fun handleOnPhotoTaken(bitmap: Bitmap) = viewModelScopeErrorHandled.launch {
+    private fun handleOnPhotoTaken(bitmap: Bitmap, exif: ExifInterface) = viewModelScopeErrorHandled.launch {
         val photosCount = uiState.value.items.size
         val name = payload.savePath.replace('/', '_') + "_$photosCount"
-        val rotatedBitmap = bitmap.rotate(90f)
-        filesRepository.saveImage(rotatedBitmap, payload.savePath, name)
+        val rotatedBitmap = bitmap.rotateIfRequired(exif)
+        val imageItem = FolderItem.ImageFile(name = name, path = payload.savePath)
+        filesRepository.createFolderItem(imageItem)?.let { uri ->
+            filesRepository.saveBitmapToUri(rotatedBitmap, uri)
+        }
         getFolderItems()
     }
 

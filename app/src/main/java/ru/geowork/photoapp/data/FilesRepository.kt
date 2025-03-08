@@ -10,7 +10,7 @@ import ru.geowork.photoapp.di.DispatcherIo
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.util.createFileInDocuments
 import ru.geowork.photoapp.util.getFilesFromDocuments
-import ru.geowork.photoapp.util.saveImageToDocuments
+import ru.geowork.photoapp.util.saveBitmapToUri
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,8 +39,8 @@ class FilesRepository @Inject constructor(
         context.getFilesFromDocuments("${getAccountFolder()}/$path", path)
     }
 
-    suspend fun saveImage(bitmap: Bitmap, path: String, name: String) = withContext(dispatcherIo) {
-        context.saveImageToDocuments(bitmap, "${getAccountFolder()}/$path", name)
+    suspend fun saveBitmapToUri(bitmap: Bitmap, uri: Uri) = withContext(dispatcherIo) {
+        context.saveBitmapToUri(bitmap, uri)
     }
 
     suspend fun copyToAppFolder(sourceUri: Uri, folderItem: FolderItem) {

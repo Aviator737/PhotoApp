@@ -18,6 +18,7 @@ serialization = "1.8.0"
 google-services = "4.4.2"
 firebase = "33.10.0"
 firebase-crashlytics = "3.0.3"
+exifinterface = "1.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,6 +45,10 @@ androidx-camera-compose = { group = "androidx.camera", name = "camera-compose", 
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
 androidx-camera-extensions = { group = "androidx.camera", name = "camera-extensions", version.ref = "camerax" }
 
+#Images
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
+
 # DI
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
@@ -52,8 +57,6 @@ hilt-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", 
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidxHilt" }
 
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "androidxNavigation" }
-
-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 

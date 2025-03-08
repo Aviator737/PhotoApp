@@ -37,19 +37,9 @@ fun Context.createFileInDocuments(fileName: String, path: String, ext: String): 
     return contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
 }
 
-fun Context.saveImageToDocuments(bitmap: Bitmap, path: String, fileName: String) {
-    val contentValues = ContentValues().apply {
-        put(MediaStore.Images.Media.DISPLAY_NAME, "$fileName.jpg")
-        put(MediaStore.Images.Media.MIME_TYPE, MIME_TYPE_IMAGE_JPEG)
-        put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/$APP_FOLDER_NAME/$path")
-    }
-
-    val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-
-    imageUri?.let { uri ->
-        contentResolver.openOutputStream(uri)?.use { outputStream ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-        }
+fun Context.saveBitmapToUri(bitmap: Bitmap, uri: Uri, quality: Int = 100) {
+    contentResolver.openOutputStream(uri)?.use { outputStream ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
     }
 }
 

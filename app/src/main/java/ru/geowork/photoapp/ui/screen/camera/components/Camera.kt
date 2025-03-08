@@ -27,8 +27,6 @@ import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -67,6 +65,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.awaitCancellation
@@ -119,8 +118,8 @@ fun Camera(
                     .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
                     .setResolutionStrategy(
                         ResolutionStrategy(
-                            Size(1920, 1080),
-                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER
+                            Size(4000, 3000),
+                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
                         )
                     )
                     .build()
@@ -317,7 +316,7 @@ fun Camera(
                     context.takePhoto(
                         imageCapture = imageCapture,
                         onError = { println(it) },
-                        onImageSaved = { onUiAction(CameraUiAction.OnPhotoTaken(it)) }
+                        onImageSaved = { bitmap, exif -> onUiAction(CameraUiAction.OnPhotoTaken(bitmap, exif)) }
                     )
                 }
             }
@@ -358,7 +357,7 @@ fun PreviewCamera() {
 private fun Context.takePhoto(
     imageCapture: ImageCapture?,
     onError: (ImageCaptureException) -> Unit,
-    onImageSaved: (Bitmap) -> Unit
+    onImageSaved: (Bitmap, ExifInterface) -> Unit
 ) {
     val outputFileOptions = ImageCapture.OutputFileOptions.Builder(cacheDir.resolve("temp.jpg")).build()
     imageCapture?.takePicture(outputFileOptions, mainExecutor,
@@ -367,8 +366,11 @@ private fun Context.takePhoto(
                 onError(error)
             }
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                val bitmap = BitmapFactory.decodeFile(outputFileResults.savedUri?.path)
-                onImageSaved(bitmap)
+                outputFileResults.savedUri?.path?.let {
+                    val bitmap = BitmapFactory.decodeFile(it)
+                    val exif = ExifInterface(it)
+                    onImageSaved(bitmap, exif)
+                }
             }
         }
     )
