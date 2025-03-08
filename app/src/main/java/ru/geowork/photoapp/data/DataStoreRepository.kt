@@ -25,12 +25,10 @@ class DataStoreRepository @Inject constructor(
 
     //Camera
     suspend fun getCameraShowGrid(): Boolean? = dataStore.data.map { it[CAMERA_SHOW_GRID] }.firstOrNull()
-    suspend fun getCameraHdrOn(): Boolean? = dataStore.data.map { it[CAMERA_HDR_ON] }.firstOrNull()
     suspend fun getCameraExposureCompensationIndex(): Int? = dataStore.data.map { it[CAMERA_EXPOSURE_COMPENSATION_INDEX] }.firstOrNull()
     suspend fun getCameraZoom(): Float? = dataStore.data.map { it[CAMERA_ZOOM] }.firstOrNull()
 
     suspend fun saveCameraShowGrid(value: Boolean) { dataStore.edit { it[CAMERA_SHOW_GRID] = value } }
-    suspend fun saveCameraHdrOn(value: Boolean) { dataStore.edit { it[CAMERA_HDR_ON] = value } }
     suspend fun saveCameraExposure(value: Int) { dataStore.edit { it[CAMERA_EXPOSURE_COMPENSATION_INDEX] = value } }
     suspend fun saveCameraZoom(value: Float) { dataStore.edit { it[CAMERA_ZOOM] = value } }
 
@@ -42,7 +40,6 @@ class DataStoreRepository @Inject constructor(
         private val SUPERVISOR_NAME = stringPreferencesKey("supervisor_name")
 
         private val CAMERA_SHOW_GRID = booleanPreferencesKey("camera_show_grid")
-        private val CAMERA_HDR_ON = booleanPreferencesKey("camera_hdr_on")
         private val CAMERA_EXPOSURE_COMPENSATION_INDEX = intPreferencesKey("camera_exposure_compensation_index")
         private val CAMERA_ZOOM = floatPreferencesKey("camera_zoom")
 

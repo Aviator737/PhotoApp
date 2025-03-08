@@ -18,12 +18,15 @@ private val APP_FILES_DIRECTORY =
 
 private const val MIME_TYPE_FOLDER = "vnd.android.document/directory"
 private const val MIME_TYPE_TEXT = "text/plain"
-private const val MIME_TYPE_IMAGE = "image/jpeg"
+private const val MIME_TYPE_IMAGE_JPEG = "image/jpeg"
+private const val MIME_TYPE_IMAGE_PNG = "image/png"
+private const val MIME_TYPE_PDF = "application/pdf"
 
 fun Context.createFileInDocuments(fileName: String, path: String, ext: String): Uri? {
     val mimeType = when (ext) {
         ".txt" -> MIME_TYPE_TEXT
-        ".jpg" -> MIME_TYPE_IMAGE
+        ".jpg" -> MIME_TYPE_IMAGE_JPEG
+        ".png" -> MIME_TYPE_IMAGE_PNG
         else -> MIME_TYPE_FOLDER
     }
     val contentValues = ContentValues().apply {
@@ -37,7 +40,7 @@ fun Context.createFileInDocuments(fileName: String, path: String, ext: String): 
 fun Context.saveImageToDocuments(bitmap: Bitmap, path: String, fileName: String) {
     val contentValues = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, "$fileName.jpg")
-        put(MediaStore.Images.Media.MIME_TYPE, MIME_TYPE_IMAGE)
+        put(MediaStore.Images.Media.MIME_TYPE, MIME_TYPE_IMAGE_JPEG)
         put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/$APP_FOLDER_NAME/$path")
     }
 
@@ -57,9 +60,12 @@ fun Context.getFilesFromDocuments(path: String, cleanPath: String): List<FolderI
         fullPath.listFiles()?.forEach { file ->
             val type = getFileType(file)
             val item = when(type) {
-                null -> FolderItem.Folder(name = file.name, path = cleanPath, fullPath = file.path)
-                MIME_TYPE_IMAGE -> FolderItem.ImageFile(name = file.name, path = cleanPath, fullPath = file.path)
-                else -> FolderItem.Unknown(name = file.name, path = cleanPath, fullPath = file.path)
+                null ->
+                    FolderItem.Folder(name = file.name, path = cleanPath, fullPath = file.path)
+                MIME_TYPE_IMAGE_JPEG, MIME_TYPE_IMAGE_PNG, MIME_TYPE_PDF ->
+                    FolderItem.ImageFile(name = file.name, path = cleanPath, fullPath = file.path)
+                else ->
+                    FolderItem.Unknown(name = file.name, path = cleanPath, fullPath = file.path)
             }
             folderItems.add(item)
         }

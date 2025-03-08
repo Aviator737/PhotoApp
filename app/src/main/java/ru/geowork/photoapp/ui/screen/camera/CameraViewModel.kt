@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.data.FilesRepository
@@ -17,6 +19,8 @@ class CameraViewModel @AssistedInject constructor(
     @Assisted private val payload: CameraPayload
 ): BaseViewModel<CameraUiState, CameraUiEvent, CameraUiAction>() {
 
+    private var saveExposureJob: Job? = null
+
     override val initialUiState: CameraUiState = CameraUiState()
 
     init {
@@ -24,15 +28,20 @@ class CameraViewModel @AssistedInject constructor(
         getFolderItems()
     }
 
-    override fun handleCoroutineException(e: Throwable) {}
+    override fun handleCoroutineException(e: Throwable) {
+        throw RuntimeException("test crash")
+    }
 
     override fun onUiAction(uiAction: CameraUiAction) {
         when (uiAction) {
             is CameraUiAction.OnZoomLevelsResolved -> handleOnZoomLevelsResolved(uiAction.minZoom, uiAction.maxZoom)
+            is CameraUiAction.OnExposureResolved ->
+                handleOnExposureCompensationRangeResolved(uiAction.isSupported, uiAction.default, uiAction.step, uiAction.min, uiAction.max)
+            is CameraUiAction.OnExposureStepSelected -> handleOnExposureStepSelected(uiAction.step)
+
             is CameraUiAction.OnZoomSelected -> handleOnZoomSelected(uiAction.value)
             CameraUiAction.SwitchExposureMenu -> handleSwitchExposureMenu()
             CameraUiAction.SwitchGrid -> handleSwitchGrid()
-            CameraUiAction.SwitchHDR -> handleSwitchHdr()
             is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken(uiAction.bitmap)
             CameraUiAction.NavigateBack -> handleNavigateBack()
         }
@@ -47,10 +56,48 @@ class CameraViewModel @AssistedInject constructor(
             if (maxZoom > 5f) add(Pair(5f, savedZoom == 5f))
             add(Pair(maxZoom, savedZoom == maxZoom))
         }
-        updateUiState {
-            it.copy(
-                zoomLevels = zoomLevels
+        updateUiState { it.copy(zoomLevels = zoomLevels) }
+    }
+
+    private fun handleOnExposureCompensationRangeResolved(
+        isSupported: Boolean,
+        default: Int,
+        step: Float,
+        min: Int,
+        max: Int
+    ) = viewModelScopeErrorHandled.launch {
+        val selectedIndex = dataStoreRepository.getCameraExposureCompensationIndex() ?: default
+
+        val steps = mutableListOf<CameraUiState.ExposureState.Step>()
+        var index = min
+
+        while (index <= max) {
+            steps.add(
+                CameraUiState.ExposureState.Step(
+                    index = index,
+                    value = step * index
+                )
             )
+            index += 2
+        }
+
+        updateUiState { state ->
+            state.copy(
+                exposureState = CameraUiState.ExposureState(
+                    isSupported = isSupported,
+                    selectedStep = steps.firstOrNull { it.index == selectedIndex },
+                    steps = steps
+                )
+            )
+        }
+    }
+
+    private fun handleOnExposureStepSelected(step: CameraUiState.ExposureState.Step) {
+        saveExposureJob?.cancel()
+        updateUiState { it.copy(exposureState = it.exposureState.copy(selectedStep = step)) }
+        saveExposureJob = viewModelScopeErrorHandled.launch {
+            delay(1000)
+            dataStoreRepository.saveCameraExposure(step.index)
         }
     }
 
@@ -60,19 +107,13 @@ class CameraViewModel @AssistedInject constructor(
     }
 
     private fun handleSwitchExposureMenu() {
-
+        updateUiState { it.copy(exposureState = it.exposureState.copy(isVisible = !it.exposureState.isVisible)) }
     }
 
     private fun handleSwitchGrid() = viewModelScopeErrorHandled.launch {
         val showGrid = !uiState.value.showGrid
         dataStoreRepository.saveCameraShowGrid(showGrid)
         updateUiState { it.copy(showGrid = showGrid) }
-    }
-
-    private fun handleSwitchHdr() = viewModelScopeErrorHandled.launch {
-        val isHdrOn = !uiState.value.isHdrOn
-        dataStoreRepository.saveCameraHdrOn(isHdrOn)
-        updateUiState { it.copy(isHdrOn = isHdrOn) }
     }
 
     private fun handleOnPhotoTaken(bitmap: Bitmap) = viewModelScopeErrorHandled.launch {
@@ -90,14 +131,10 @@ class CameraViewModel @AssistedInject constructor(
     private fun initSettings() = viewModelScopeErrorHandled.launch {
         val imageQuality = dataStoreRepository.getImageQuality()
         val showGrid = dataStoreRepository.getCameraShowGrid() ?: false
-        val isHdrOn = dataStoreRepository.getCameraHdrOn() ?: false
-        val exposureCompensationIndex = dataStoreRepository.getCameraExposureCompensationIndex()
 
         updateUiState {
             it.copy(
                 imageQuality = imageQuality,
-                isHdrOn = isHdrOn,
-                exposureCompensationIndex = exposureCompensationIndex,
                 showGrid = showGrid
             )
         }

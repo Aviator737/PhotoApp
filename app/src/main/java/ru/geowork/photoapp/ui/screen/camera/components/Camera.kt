@@ -24,8 +24,14 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.camera.viewfinder.core.ImplementationMode
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +41,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -42,6 +49,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -71,6 +79,7 @@ import ru.geowork.photoapp.ui.screen.camera.CameraUiState
 import ru.geowork.photoapp.ui.theme.AppTheme
 import ru.geowork.photoapp.ui.theme.BackgroundSecondaryDark
 import ru.geowork.photoapp.util.noRippleClickable
+import java.util.Locale
 
 @Composable
 fun Camera(
@@ -91,6 +100,7 @@ fun Camera(
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
 
     state.zoomLevels.firstOrNull { it.second }?.let { cameraControl?.setZoomRatio(it.first) }
+    state.exposureState.selectedStep?.let { cameraControl?.setExposureCompensationIndex(it.index) }
 
     val itemsScrollState = rememberLazyListState()
 
@@ -155,6 +165,18 @@ fun Camera(
                     )
                 )
 
+                with(camera.cameraInfo.exposureState) {
+                    onUiAction(
+                        CameraUiAction.OnExposureResolved(
+                            isSupported = isExposureCompensationSupported,
+                            default = exposureCompensationIndex,
+                            step = exposureCompensationStep.toFloat(),
+                            min = exposureCompensationRange.lower,
+                            max = exposureCompensationRange.upper,
+                        )
+                    )
+                }
+
                 try {
                     awaitCancellation()
                 } finally {
@@ -182,15 +204,6 @@ fun Camera(
             ) {
                 Icon(
                     modifier = Modifier
-                        .noRippleClickable { onUiAction(CameraUiAction.SwitchHDR) }
-                        .padding(16.dp)
-                        .size(24.dp),
-                    painter = painterResource(if (state.isHdrOn) R.drawable.ic_hdr_on else R.drawable.ic_hdr_off),
-                    contentDescription = null,
-                    tint = if (state.isHdrOn) AppTheme.colors.orange else AppTheme.colors.contentConstant
-                )
-                Icon(
-                    modifier = Modifier
                         .noRippleClickable { onUiAction(CameraUiAction.SwitchGrid) }
                         .padding(16.dp)
                         .size(24.dp),
@@ -198,20 +211,38 @@ fun Camera(
                     contentDescription = null,
                     tint = if (state.showGrid) AppTheme.colors.orange else AppTheme.colors.contentConstant
                 )
-                Icon(
+                Box(
                     modifier = Modifier
                         .noRippleClickable { onUiAction(CameraUiAction.SwitchExposureMenu) }
                         .padding(16.dp)
-                        .size(24.dp),
-                    painter = painterResource(R.drawable.ic_exposure),
-                    contentDescription = null,
-                    tint = if (state.exposureCompensationIndex != null) AppTheme.colors.orange else AppTheme.colors.contentConstant
-                )
+                        .size(height = 24.dp, width = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (state.exposureState.isVisible || state.exposureState.selectedStep?.index != 0) {
+                        val value = state.exposureState.selectedStep?.value ?: 0f
+                        val prefix = when {
+                            value > 0f -> "+"
+                            value == 0f -> " "
+                            else -> ""
+                        }
+                        Text(
+                            text = prefix + String.format(Locale.US, "%.1f", value),
+                            color = AppTheme.colors.orange
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_exposure),
+                            contentDescription = null,
+                            tint = AppTheme.colors.contentConstant
+                        )
+                    }
+                }
             }
             surfaceRequest?.let { surfaceRequest ->
                 Box(modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.75f)) {
+                    .aspectRatio(0.75f)
+                ) {
                     CameraXViewfinder(
                         modifier = Modifier
                             .fillMaxSize()
@@ -228,6 +259,9 @@ fun Camera(
                                             focusCoordinates = tapCoordinates
                                             showFocusPoint = true
                                         }
+                                }
+                                detectTransformGestures { _, _, zoomChange, _ ->
+                                    println(zoomChange)
                                 }
                             },
                         surfaceRequest = surfaceRequest,
@@ -258,9 +292,25 @@ fun Camera(
                 }
             }
             Box(
+                modifier = Modifier.height(40.dp).fillMaxWidth().padding(horizontal = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                this@Column.AnimatedVisibility(
+                    visible = state.exposureState.isVisible,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    ExposureCompensationSettings(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = state.exposureState,
+                        onSelected = { onUiAction(CameraUiAction.OnExposureStepSelected(it)) }
+                    )
+                }
+            }
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 40.dp),
+                    .padding(top = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CameraShotButton {

@@ -95,7 +95,7 @@ fun Graveyards(
                             backgroundColor = AppTheme.colors.contentBackground,
                             contentColor = AppTheme.colors.contentPrimary
                         ),
-                        onClick = { pickPictureLauncher.launch("image/*") }
+                        onClick = { pickPictureLauncher.launch("*/*") }
                     ) {
                         Text(
                             text = stringResource(R.string.graves_add_image_file),

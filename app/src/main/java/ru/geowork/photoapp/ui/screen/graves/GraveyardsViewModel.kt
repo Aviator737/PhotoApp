@@ -59,7 +59,7 @@ class GraveyardsViewModel @Inject constructor(
         }
     }
 
-    private fun handleOnAddExternalPicture(uri: Uri) {
+    private fun handleOnAddExternalPicture(uri: Uri) = viewModelScopeErrorHandled.launch {
 
     }
 

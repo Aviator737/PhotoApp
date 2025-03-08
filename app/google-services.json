@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "846234967293",
+    "project_id": "gwapp-b3d1c",
+    "storage_bucket": "gwapp-b3d1c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846234967293:android:e43d283453bd4e04a7b294",
+        "android_client_info": {
+          "package_name": "ru.geowork.photoapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBf7gSiVlJcXUCElJo0lTDU80KSI8TdvUM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

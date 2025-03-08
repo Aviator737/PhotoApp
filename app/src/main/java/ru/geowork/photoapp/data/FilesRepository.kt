@@ -43,7 +43,7 @@ class FilesRepository @Inject constructor(
         context.saveImageToDocuments(bitmap, "${getAccountFolder()}/$path", name)
     }
 
-    suspend fun copyFromExternal(sourceUri: Uri, folderItem: FolderItem) {
+    suspend fun copyToAppFolder(sourceUri: Uri, folderItem: FolderItem) {
 
     }
 
