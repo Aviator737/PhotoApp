@@ -25,7 +25,7 @@ fun PhotoViewerDialog(
         onDismiss = onDismiss
     ) {
         AsyncImage(
-            model = item.fullPath,
+            model = item.uri,
             contentDescription = null,
             contentScale = ContentScale.Fit,
             modifier = Modifier

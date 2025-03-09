@@ -1,7 +1,5 @@
 package ru.geowork.photoapp.ui.screen.camera
 
-import android.graphics.Bitmap
-import androidx.exifinterface.media.ExifInterface
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +10,6 @@ import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.data.FilesRepository
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.BaseViewModel
-import ru.geowork.photoapp.util.rotateIfRequired
 
 @HiltViewModel(assistedFactory = CameraAssistedFactory::class)
 class CameraViewModel @AssistedInject constructor(
@@ -20,6 +17,12 @@ class CameraViewModel @AssistedInject constructor(
     private val filesRepository: FilesRepository,
     @Assisted private val payload: CameraPayload
 ): BaseViewModel<CameraUiState, CameraUiEvent, CameraUiAction>() {
+
+    private var isSettingsInitialized: Boolean = false
+    private var isZoomLevelsInitialized: Boolean = false
+    private var isExposureInitialized: Boolean = false
+    private val isInitialized
+        get() = isSettingsInitialized && isZoomLevelsInitialized && isExposureInitialized
 
     private var saveExposureJob: Job? = null
 
@@ -30,21 +33,20 @@ class CameraViewModel @AssistedInject constructor(
         getFolderItems()
     }
 
-    override fun handleCoroutineException(e: Throwable) {
-        throw RuntimeException("test crash")
-    }
+    override fun handleCoroutineException(e: Throwable) {}
 
     override fun onUiAction(uiAction: CameraUiAction) {
         when (uiAction) {
             is CameraUiAction.OnZoomLevelsResolved -> handleOnZoomLevelsResolved(uiAction.minZoom, uiAction.maxZoom)
             is CameraUiAction.OnExposureResolved ->
-                handleOnExposureCompensationRangeResolved(uiAction.isSupported, uiAction.default, uiAction.step, uiAction.min, uiAction.max)
+                handleOnExposureResolved(uiAction.isSupported, uiAction.default, uiAction.step, uiAction.min, uiAction.max)
             is CameraUiAction.OnExposureStepSelected -> handleOnExposureStepSelected(uiAction.step)
 
             is CameraUiAction.OnZoomSelected -> handleOnZoomSelected(uiAction.value)
             CameraUiAction.SwitchExposureMenu -> handleSwitchExposureMenu()
             CameraUiAction.SwitchGrid -> handleSwitchGrid()
-            is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken(uiAction.bitmap, uiAction.exif)
+            CameraUiAction.OnTakePhotoClick -> handleOnTakePhotoClick()
+            is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken()
             CameraUiAction.NavigateBack -> handleNavigateBack()
         }
     }
@@ -55,13 +57,13 @@ class CameraViewModel @AssistedInject constructor(
             add(Pair(minZoom, savedZoom == minZoom))
             if (minZoom != 1f) add(Pair(1f, savedZoom == 1f))
             if (maxZoom > 2f) add(Pair(2f, savedZoom == 2f))
-            if (maxZoom > 5f) add(Pair(5f, savedZoom == 5f))
-            add(Pair(maxZoom, savedZoom == maxZoom))
+            if (maxZoom > 3f) add(Pair(3f, savedZoom == 3f))
         }
-        updateUiState { it.copy(zoomLevels = zoomLevels) }
+        isZoomLevelsInitialized = true
+        updateUiState { it.copy(isInitialized = isInitialized, zoomLevels = zoomLevels) }
     }
 
-    private fun handleOnExposureCompensationRangeResolved(
+    private fun handleOnExposureResolved(
         isSupported: Boolean,
         default: Int,
         step: Float,
@@ -80,15 +82,18 @@ class CameraViewModel @AssistedInject constructor(
                     value = step * index
                 )
             )
-            index += 2
+            index += 1
         }
+
+        isExposureInitialized = true
 
         updateUiState { state ->
             state.copy(
+                isInitialized = isInitialized,
                 exposureState = CameraUiState.ExposureState(
                     isSupported = isSupported,
                     selectedStep = steps.firstOrNull { it.index == selectedIndex },
-                    steps = steps
+                    steps = steps,
                 )
             )
         }
@@ -118,14 +123,19 @@ class CameraViewModel @AssistedInject constructor(
         updateUiState { it.copy(showGrid = showGrid) }
     }
 
-    private fun handleOnPhotoTaken(bitmap: Bitmap, exif: ExifInterface) = viewModelScopeErrorHandled.launch {
+    private fun handleOnTakePhotoClick() = viewModelScopeErrorHandled.launch {
         val photosCount = uiState.value.items.size
         val name = payload.savePath.replace('/', '_') + "_$photosCount"
-        val rotatedBitmap = bitmap.rotateIfRequired(exif)
         val imageItem = FolderItem.ImageFile(name = name, path = payload.savePath)
         filesRepository.createFolderItem(imageItem)?.let { uri ->
-            filesRepository.saveBitmapToUri(rotatedBitmap, uri)
+            filesRepository.openOutputStream(uri)?.let { stream ->
+                updateUiState { it.copy(outputStream = stream) }
+            }
         }
+    }
+
+    private fun handleOnPhotoTaken() = viewModelScopeErrorHandled.launch {
+        updateUiState { it.copy(outputStream = null) }
         getFolderItems()
     }
 
@@ -136,9 +146,10 @@ class CameraViewModel @AssistedInject constructor(
     private fun initSettings() = viewModelScopeErrorHandled.launch {
         val imageQuality = dataStoreRepository.getImageQuality()
         val showGrid = dataStoreRepository.getCameraShowGrid() ?: false
-
+        isSettingsInitialized = true
         updateUiState {
             it.copy(
+                isInitialized = isInitialized,
                 imageQuality = imageQuality,
                 showGrid = showGrid
             )
@@ -146,7 +157,7 @@ class CameraViewModel @AssistedInject constructor(
     }
 
     private fun getFolderItems() = viewModelScopeErrorHandled.launch {
-        val folderItems = filesRepository.getFolderItems(payload.savePath)
+        val folderItems = filesRepository.getFolderItems(payload.savePath).filterIsInstance<FolderItem.ImageFile>()
         updateUiState { it.copy(items = folderItems) }
     }
 }

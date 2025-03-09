@@ -22,28 +22,23 @@ private const val MIME_TYPE_IMAGE_JPEG = "image/jpeg"
 private const val MIME_TYPE_IMAGE_PNG = "image/png"
 private const val MIME_TYPE_PDF = "application/pdf"
 
-fun Context.createFileInDocuments(fileName: String, path: String, ext: String): Uri? {
-    val mimeType = when (ext) {
-        ".txt" -> MIME_TYPE_TEXT
-        ".jpg" -> MIME_TYPE_IMAGE_JPEG
-        ".png" -> MIME_TYPE_IMAGE_PNG
-        else -> MIME_TYPE_FOLDER
-    }
+fun Context.createFile(fileName: String, path: String, ext: String): Uri? {
+    val mimeType = getMimeType(ext)
     val contentValues = ContentValues().apply {
         put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
         put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
         put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/$APP_FOLDER_NAME/$path${if (ext.isEmpty()) "/$fileName" else ""}")
     }
-    return contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
-}
-
-fun Context.saveBitmapToUri(bitmap: Bitmap, uri: Uri, quality: Int = 100) {
-    contentResolver.openOutputStream(uri)?.use { outputStream ->
-        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+    val uri = when(mimeType) {
+        MIME_TYPE_IMAGE_JPEG, MIME_TYPE_IMAGE_PNG -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        else -> MediaStore.Files.getContentUri("external")
     }
+    return contentResolver.insert(uri, contentValues)
 }
 
-fun Context.getFilesFromDocuments(path: String, cleanPath: String): List<FolderItem> {
+fun Context.openOutputStream(uri: Uri) = contentResolver.openOutputStream(uri)
+
+fun Context.getFiles(path: String, cleanPath: String): List<FolderItem> {
     val folderItems = mutableListOf<FolderItem>()
     val fullPath = File("$APP_FILES_DIRECTORY/$path")
     if (fullPath.exists()) {
@@ -51,11 +46,11 @@ fun Context.getFilesFromDocuments(path: String, cleanPath: String): List<FolderI
             val type = getFileType(file)
             val item = when(type) {
                 null ->
-                    FolderItem.Folder(name = file.name, path = cleanPath, fullPath = file.path)
+                    FolderItem.Folder(name = file.name, path = cleanPath)
                 MIME_TYPE_IMAGE_JPEG, MIME_TYPE_IMAGE_PNG, MIME_TYPE_PDF ->
-                    FolderItem.ImageFile(name = file.name, path = cleanPath, fullPath = file.path)
+                    FolderItem.ImageFile(name = file.name, path = cleanPath, uri = Uri.fromFile(file))
                 else ->
-                    FolderItem.Unknown(name = file.name, path = cleanPath, fullPath = file.path)
+                    FolderItem.Unknown(name = file.name, path = cleanPath)
             }
             folderItems.add(item)
         }
@@ -73,4 +68,11 @@ fun Context.getFileType(file: File): String? = if (file.exists()) {
     mimeType
 } else {
     null
+}
+
+private fun getMimeType(ext: String): String = when (ext) {
+    ".txt" -> MIME_TYPE_TEXT
+    ".jpg" -> MIME_TYPE_IMAGE_JPEG
+    ".png" -> MIME_TYPE_IMAGE_PNG
+    else -> MIME_TYPE_FOLDER
 }

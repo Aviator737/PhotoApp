@@ -2,8 +2,7 @@ package ru.geowork.photoapp.ui.screen.camera.components
 
 import android.Manifest
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Rational
 import android.util.Size
 import android.view.Surface
@@ -65,7 +64,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.exifinterface.media.ExifInterface
+import androidx.core.net.toFile
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.awaitCancellation
@@ -77,7 +76,10 @@ import ru.geowork.photoapp.ui.screen.camera.CameraUiAction
 import ru.geowork.photoapp.ui.screen.camera.CameraUiState
 import ru.geowork.photoapp.ui.theme.AppTheme
 import ru.geowork.photoapp.ui.theme.BackgroundSecondaryDark
+import ru.geowork.photoapp.util.HideSystemBars
 import ru.geowork.photoapp.util.noRippleClickable
+import java.io.File
+import java.io.OutputStream
 import java.util.Locale
 
 @Composable
@@ -102,6 +104,19 @@ fun Camera(
     state.exposureState.selectedStep?.let { cameraControl?.setExposureCompensationIndex(it.index) }
 
     val itemsScrollState = rememberLazyListState()
+
+    HideSystemBars()
+
+    LaunchedEffect(state.outputStream) {
+        if (state.outputStream != null) {
+            context.takePhoto(
+                outputStream = state.outputStream,
+                imageCapture = imageCapture,
+                onError = { println(it) },
+                onImageSaved = { onUiAction(CameraUiAction.OnPhotoTaken) }
+            )
+        }
+    }
 
     LaunchedEffect(state.items.size) {
         if (state.items.isNotEmpty()) {
@@ -190,134 +205,128 @@ fun Camera(
         .fillMaxWidth()
         .background(BackgroundSecondaryDark)
     ) {
-        WithPermissions(
-            requestedPermissions = arrayOf(Manifest.permission.CAMERA),
-            rationaleText = stringResource(R.string.camera_permissions_not_granted_text),
-            onDismiss = { onUiAction(CameraUiAction.NavigateBack) }
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 48.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+        if (state.isInitialized) {
+            WithPermissions(
+                requestedPermissions = arrayOf(Manifest.permission.CAMERA),
+                rationaleText = stringResource(R.string.camera_permissions_not_granted_text),
+                onDismiss = { onUiAction(CameraUiAction.NavigateBack) }
             ) {
-                Icon(
-                    modifier = Modifier
-                        .noRippleClickable { onUiAction(CameraUiAction.SwitchGrid) }
-                        .padding(16.dp)
-                        .size(24.dp),
-                    painter = painterResource(if (state.showGrid) R.drawable.ic_grid_3x3 else R.drawable.ic_grid_off),
-                    contentDescription = null,
-                    tint = if (state.showGrid) AppTheme.colors.orange else AppTheme.colors.contentConstant
-                )
-                Box(
-                    modifier = Modifier
-                        .noRippleClickable { onUiAction(CameraUiAction.SwitchExposureMenu) }
-                        .padding(16.dp)
-                        .size(height = 24.dp, width = 48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (state.exposureState.isVisible || state.exposureState.selectedStep?.index != 0) {
-                        val value = state.exposureState.selectedStep?.value ?: 0f
-                        val prefix = when {
-                            value > 0f -> "+"
-                            value == 0f -> " "
-                            else -> ""
+                surfaceRequest?.let { surfaceRequest ->
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(0.75f)
+                    ) {
+                        CameraXViewfinder(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .pointerInput(Unit) {
+                                    detectTapGestures { tapCoordinates ->
+                                        surfaceMeteringPointFactory
+                                            ?.createPoint(tapCoordinates.x, tapCoordinates.y)
+                                            ?.let {
+                                                cameraControl?.startFocusAndMetering(
+                                                    FocusMeteringAction
+                                                        .Builder(it)
+                                                        .build()
+                                                )
+                                                focusCoordinates = tapCoordinates
+                                                showFocusPoint = true
+                                            }
+                                    }
+                                    detectTransformGestures { _, _, zoomChange, _ ->
+                                        println(zoomChange)
+                                    }
+                                },
+                            surfaceRequest = surfaceRequest,
+                            implementationMode = ImplementationMode.EXTERNAL
+                        )
+                        if (state.showGrid) {
+                            CameraGridOverlay(Modifier.fillMaxSize())
                         }
-                        Text(
-                            text = prefix + String.format(Locale.US, "%.1f", value),
-                            color = AppTheme.colors.orange
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_exposure),
-                            contentDescription = null,
-                            tint = AppTheme.colors.contentConstant
-                        )
+                        focusCoordinates?.let { CameraFocusPoint(it, showFocusPoint) }
+                        LaunchedEffect(showFocusPoint) {
+                            delay(1000)
+                            showFocusPoint = false
+                        }
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            state.zoomLevels.forEach {
+                                ZoomButton(
+                                    value = it.first,
+                                    isActive = it.second,
+                                    onClick = { onUiAction(CameraUiAction.OnZoomSelected(it.first)) }
+                                )
+                            }
+                        }
                     }
                 }
-            }
-            surfaceRequest?.let { surfaceRequest ->
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(0.75f)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    CameraXViewfinder(
+                    Icon(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectTapGestures { tapCoordinates ->
-                                    surfaceMeteringPointFactory
-                                        ?.createPoint(tapCoordinates.x, tapCoordinates.y)
-                                        ?.let {
-                                            cameraControl?.startFocusAndMetering(
-                                                FocusMeteringAction
-                                                    .Builder(it)
-                                                    .build()
-                                            )
-                                            focusCoordinates = tapCoordinates
-                                            showFocusPoint = true
-                                        }
-                                }
-                                detectTransformGestures { _, _, zoomChange, _ ->
-                                    println(zoomChange)
-                                }
-                            },
-                        surfaceRequest = surfaceRequest,
-                        implementationMode = ImplementationMode.EXTERNAL
+                            .noRippleClickable { onUiAction(CameraUiAction.SwitchGrid) }
+                            .padding(16.dp)
+                            .size(24.dp),
+                        painter = painterResource(if (state.showGrid) R.drawable.ic_grid_3x3 else R.drawable.ic_grid_off),
+                        contentDescription = null,
+                        tint = if (state.showGrid) AppTheme.colors.orange else AppTheme.colors.contentConstant
                     )
-                    if (state.showGrid) {
-                        CameraGridOverlay(Modifier.fillMaxSize())
-                    }
-                    focusCoordinates?.let { CameraFocusPoint(it, showFocusPoint) }
-                    LaunchedEffect(showFocusPoint) {
-                        delay(1000)
-                        showFocusPoint = false
-                    }
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            .noRippleClickable { onUiAction(CameraUiAction.SwitchExposureMenu) }
+                            .padding(16.dp)
+                            .size(height = 24.dp, width = 48.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        state.zoomLevels.forEach {
-                            ZoomButton(
-                                value = it.first,
-                                isActive = it.second,
-                                onClick = { onUiAction(CameraUiAction.OnZoomSelected(it.first)) }
+                        if (state.exposureState.isVisible || state.exposureState.selectedStep?.index != 0) {
+                            val value = state.exposureState.selectedStep?.value ?: 0f
+                            val prefix = when {
+                                value > 0f -> "+"
+                                value == 0f -> " "
+                                else -> ""
+                            }
+                            Text(
+                                text = prefix + String.format(Locale.US, "%.1f", value),
+                                color = AppTheme.colors.orange
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_exposure),
+                                contentDescription = null,
+                                tint = AppTheme.colors.contentConstant
                             )
                         }
                     }
                 }
-            }
-            Box(
-                modifier = Modifier.height(40.dp).fillMaxWidth().padding(horizontal = 24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                this@Column.AnimatedVisibility(
-                    visible = state.exposureState.isVisible,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
+                Box(
+                    modifier = Modifier.height(40.dp).fillMaxWidth().padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    ExposureCompensationSettings(
-                        modifier = Modifier.fillMaxWidth(),
-                        state = state.exposureState,
-                        onSelected = { onUiAction(CameraUiAction.OnExposureStepSelected(it)) }
-                    )
+                    this@Column.AnimatedVisibility(
+                        visible = state.exposureState.isVisible,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        ExposureCompensationSettings(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = state.exposureState,
+                            onSelected = { onUiAction(CameraUiAction.OnExposureStepSelected(it)) }
+                        )
+                    }
                 }
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CameraShotButton {
-                    context.takePhoto(
-                        imageCapture = imageCapture,
-                        onError = { println(it) },
-                        onImageSaved = { bitmap, exif -> onUiAction(CameraUiAction.OnPhotoTaken(bitmap, exif)) }
-                    )
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CameraShotButton { onUiAction(CameraUiAction.OnTakePhotoClick) }
                 }
             }
         }
@@ -334,7 +343,7 @@ fun Camera(
         ) {
             items(state.items) { item ->
                 AsyncImage(
-                    model = item.fullPath,
+                    model = item.uri,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -355,22 +364,21 @@ fun PreviewCamera() {
 }
 
 private fun Context.takePhoto(
+    outputStream: OutputStream,
     imageCapture: ImageCapture?,
     onError: (ImageCaptureException) -> Unit,
-    onImageSaved: (Bitmap, ExifInterface) -> Unit
+    onImageSaved: () -> Unit
 ) {
-    val outputFileOptions = ImageCapture.OutputFileOptions.Builder(cacheDir.resolve("temp.jpg")).build()
+    val outputFileOptions = ImageCapture.OutputFileOptions.Builder(outputStream).build()
     imageCapture?.takePicture(outputFileOptions, mainExecutor,
         object : ImageCapture.OnImageSavedCallback {
             override fun onError(error: ImageCaptureException) {
+                outputStream.close()
                 onError(error)
             }
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                outputFileResults.savedUri?.path?.let {
-                    val bitmap = BitmapFactory.decodeFile(it)
-                    val exif = ExifInterface(it)
-                    onImageSaved(bitmap, exif)
-                }
+                outputStream.close()
+                onImageSaved()
             }
         }
     )

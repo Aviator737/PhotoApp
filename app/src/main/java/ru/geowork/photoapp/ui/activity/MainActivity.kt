@@ -74,7 +74,6 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxSize()
                             .background(AppTheme.colors.backgroundSecondary)
-                            .safeDrawingPadding()
                     )
                 }
             }
@@ -89,7 +88,7 @@ class MainActivity : ComponentActivity() {
             .apply {
                 addCategory("android.intent.category.DEFAULT")
             }.also {
-                it.data = Uri.parse("package:${this.packageName}")
+                it.data = Uri.parse("package:$packageName")
             }
         requestAllFilesAccess.launch(intent)
     } catch (e: Exception) {

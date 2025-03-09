@@ -2,6 +2,7 @@ package ru.geowork.photoapp.ui.screen.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
@@ -18,7 +19,7 @@ fun Settings(
 ) {
     val focusManager = LocalFocusManager.current
 
-    Column(modifier = Modifier.fillMaxSize().noRippleClickable {
+    Column(modifier = Modifier.fillMaxSize().safeDrawingPadding().noRippleClickable {
         focusManager.clearFocus()
     }) {
         state.imageQuality?.let { quality ->

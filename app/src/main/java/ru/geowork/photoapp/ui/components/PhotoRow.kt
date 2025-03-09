@@ -70,15 +70,18 @@ fun PhotoRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(photoRow.items) { item ->
-                AsyncImage(
-                    model = item.fullPath,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { if (item is FolderItem.ImageFile) onPhotoClick(item) }
-                )
+                when(item) {
+                    is FolderItem.ImageFile -> AsyncImage(
+                        model = item.uri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onPhotoClick(item) }
+                    )
+                    else -> {}
+                }
             }
             item {
                 Box(

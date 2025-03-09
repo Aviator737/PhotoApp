@@ -2,16 +2,21 @@ package ru.geowork.photoapp.ui.screen.camera
 
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.UiState
+import java.io.OutputStream
 import kotlin.math.abs
 
 data class CameraUiState(
+    val isInitialized: Boolean = false,
+
+    val outputStream: OutputStream? = null,
+
     val imageQuality: Int? = null,
 
     val exposureState: ExposureState = ExposureState(),
 
     val zoomLevels: List<Pair<Float, Boolean>> = listOf(),
     val showGrid: Boolean = false,
-    val items: List<FolderItem> = listOf()
+    val items: List<FolderItem.ImageFile> = listOf()
 ): UiState {
 
     data class ExposureState(

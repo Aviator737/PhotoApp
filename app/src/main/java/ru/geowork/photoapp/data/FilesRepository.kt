@@ -1,16 +1,15 @@
 package ru.geowork.photoapp.data
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import ru.geowork.photoapp.di.DispatcherIo
 import ru.geowork.photoapp.model.FolderItem
-import ru.geowork.photoapp.util.createFileInDocuments
-import ru.geowork.photoapp.util.getFilesFromDocuments
-import ru.geowork.photoapp.util.saveBitmapToUri
+import ru.geowork.photoapp.util.createFile
+import ru.geowork.photoapp.util.getFiles
+import ru.geowork.photoapp.util.openOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,7 +27,7 @@ class FilesRepository @Inject constructor(
             is FolderItem.ImageFile -> ".jpg"
             is FolderItem.TextFile -> ".txt"
         }
-        return context.createFileInDocuments(
+        return context.createFile(
             fileName = folderItem.name,
             path = "${getAccountFolder()}/${folderItem.path}",
             ext = fileExt
@@ -36,11 +35,11 @@ class FilesRepository @Inject constructor(
     }
 
     suspend fun getFolderItems(path: String) = withContext(dispatcherIo) {
-        context.getFilesFromDocuments("${getAccountFolder()}/$path", path)
+        context.getFiles("${getAccountFolder()}/$path", path)
     }
 
-    suspend fun saveBitmapToUri(bitmap: Bitmap, uri: Uri) = withContext(dispatcherIo) {
-        context.saveBitmapToUri(bitmap, uri)
+    suspend fun openOutputStream(uri: Uri) = withContext(dispatcherIo) {
+        context.openOutputStream(uri)
     }
 
     suspend fun copyToAppFolder(sourceUri: Uri, folderItem: FolderItem) {

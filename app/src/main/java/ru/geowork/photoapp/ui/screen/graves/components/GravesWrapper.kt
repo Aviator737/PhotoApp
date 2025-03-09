@@ -32,6 +32,7 @@ import ru.geowork.photoapp.ui.theme.ContentPrimaryLight
 
 @Composable
 fun GravesWrapper(
+    modifier: Modifier = Modifier,
     isEditMode: Boolean,
     showBackButton: Boolean,
     showOptionsButton: Boolean,
@@ -40,7 +41,7 @@ fun GravesWrapper(
     onOptionsClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    Column(modifier = Modifier
+    Column(modifier = modifier
         .then(if(isEditMode) Modifier.border(
             border = BorderStroke(3.dp, AppTheme.colors.orange),
         ) else Modifier)
