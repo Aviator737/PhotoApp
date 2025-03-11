@@ -34,15 +34,17 @@ import ru.geowork.photoapp.ui.theme.AppTheme
 @Composable
 fun PhotoRow(
     modifier: Modifier = Modifier,
-    photoRow: FolderItem.PhotoRow,
+    folder: FolderItem.Folder,
     onTakePhotoClick: () -> Unit,
     onPhotoClick: (FolderItem.ImageFile) -> Unit
 ) {
+    val items = folder.childItems ?: return
+
     val itemsScrollState = rememberLazyListState()
 
-    LaunchedEffect(photoRow.items.size) {
-        if (photoRow.items.isNotEmpty()) {
-            itemsScrollState.animateScrollToItem(photoRow.items.lastIndex)
+    LaunchedEffect(items.size) {
+        if (items.isNotEmpty()) {
+            itemsScrollState.animateScrollToItem(folder.childItems.lastIndex)
         }
     }
 
@@ -58,7 +60,7 @@ fun PhotoRow(
         Row {
             Text(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                text = photoRow.name,
+                text = folder.visibleName,
                 style = AppTheme.typography.medium16,
                 color = AppTheme.colors.contentPrimary
             )
@@ -69,7 +71,7 @@ fun PhotoRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(photoRow.items) { item ->
+            items(items) { item ->
                 when(item) {
                     is FolderItem.ImageFile -> AsyncImage(
                         model = item.uri,

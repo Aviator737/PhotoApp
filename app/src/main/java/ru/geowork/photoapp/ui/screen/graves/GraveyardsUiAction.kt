@@ -12,21 +12,17 @@ sealed class GraveyardsUiAction: UiAction {
 
     data object OnUpdateFolderItems: GraveyardsUiAction()
 
-    data class OnAddExternalPicture(val uri: Uri): GraveyardsUiAction()
+    data class OnAddExternalFile(val uri: Uri, val fileName: String): GraveyardsUiAction()
 
     data class OnParentFolderClick(val item: FolderItem.Folder): GraveyardsUiAction()
     data class OnFolderItemClick(val item: FolderItem): GraveyardsUiAction()
+    data class OnChildItemClick(val parent: FolderItem.Folder, val child: FolderItem): GraveyardsUiAction()
 
     data object OnAddFolderClick: GraveyardsUiAction()
-    data object OnAddImageFileClick: GraveyardsUiAction()
     data object OnAddTextFileClick: GraveyardsUiAction()
     data class OnItemNameInput(val name: String): GraveyardsUiAction()
     data object OnDismissItemDialog: GraveyardsUiAction()
     data object OnItemNameConfirm: GraveyardsUiAction()
 
-    data class OnTakePhotoClick(val photoRow: FolderItem.PhotoRow): GraveyardsUiAction()
-    data object OnRepeatPhoto: GraveyardsUiAction()
-    data object OnStopTakePhotos: GraveyardsUiAction()
-
-    data object OnClosePhoto: GraveyardsUiAction()
+    data class OnTakePhotoClick(val folder: FolderItem.Folder): GraveyardsUiAction()
 }

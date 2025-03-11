@@ -8,7 +8,10 @@ import ru.geowork.photoapp.data.GraveyardsRepository
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.BaseViewModel
 import ru.geowork.photoapp.ui.screen.camera.CameraPayload
+import ru.geowork.photoapp.ui.screen.gallery.GalleryPayload
 import javax.inject.Inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @HiltViewModel
 class GraveyardsViewModel @Inject constructor(
@@ -32,35 +35,34 @@ class GraveyardsViewModel @Inject constructor(
 
             GraveyardsUiAction.OnUpdateFolderItems -> updateFolderItems()
 
-            is GraveyardsUiAction.OnAddExternalPicture -> handleOnAddExternalPicture(uiAction.uri)
+            is GraveyardsUiAction.OnAddExternalFile -> handleOnAddExternalFile(uiAction.uri, uiAction.fileName)
 
             is GraveyardsUiAction.OnParentFolderClick -> handleOnParentFolderClick(uiAction.item)
             is GraveyardsUiAction.OnFolderItemClick -> handleOnFolderItemClick(uiAction.item)
+            is GraveyardsUiAction.OnChildItemClick -> handleOnChildItemClick(uiAction.parent, uiAction.child)
 
             GraveyardsUiAction.OnAddFolderClick -> handleOnAddFolderClick()
-            GraveyardsUiAction.OnAddImageFileClick -> handleOnAddImageFileClick()
             GraveyardsUiAction.OnAddTextFileClick -> handleOnAddTextFileClick()
             is GraveyardsUiAction.OnItemNameInput -> handleOnItemNameInput(uiAction.name)
             GraveyardsUiAction.OnDismissItemDialog -> handleOnDismissItemDialog()
             GraveyardsUiAction.OnItemNameConfirm -> handleOnItemNameConfirm()
 
-            is GraveyardsUiAction.OnTakePhotoClick -> handleOnTakePhotoClick(uiAction.photoRow)
-            GraveyardsUiAction.OnRepeatPhoto -> handleOnRepeatPhoto()
-            GraveyardsUiAction.OnStopTakePhotos -> handleOnStopTakePhotos()
-
-            GraveyardsUiAction.OnClosePhoto -> handleOnClosePhoto()
+            is GraveyardsUiAction.OnTakePhotoClick -> handleOnTakePhotoClick(uiAction.folder)
         }
     }
 
     private fun updateFolderItems() = viewModelScopeErrorHandled.launch {
         val folderItems = getFolderItems()
-        updateUiState {
-            it.copy(folderItems = folderItems)
-        }
+        updateUiState { it.copy(folderItems = folderItems) }
     }
 
-    private fun handleOnAddExternalPicture(uri: Uri) = viewModelScopeErrorHandled.launch {
-
+    private fun handleOnAddExternalFile(
+        sourceUri: Uri,
+        fileName: String
+    ) = viewModelScopeErrorHandled.launch {
+        val path = parentFolders.joinToString("/") { it.name }
+        filesRepository.copyFromUri(sourceUri, fileName, path)
+        updateFolderItems()
     }
 
     private fun handleSetIsEditMode(value: Boolean) {
@@ -114,9 +116,15 @@ class GraveyardsViewModel @Inject constructor(
         when(item) {
             is FolderItem.Folder -> handleFolderClick(item)
             is FolderItem.ImageFile -> handleOnPhotoClick(item)
-            is FolderItem.TextFile -> TODO()
-            is FolderItem.PhotoRow -> TODO()
-            is FolderItem.Unknown -> {}
+            is FolderItem.DocumentFile -> handleOnDocumentFileClick(item)
+        }
+    }
+
+    private fun handleOnChildItemClick(parent: FolderItem.Folder, child: FolderItem) {
+        if (child !is FolderItem.ImageFile) return
+        val position = parent.childItems?.indexOf(child) ?: -1
+        if (position != -1) {
+            sendUiEvent(GraveyardsUiEvent.NavigateToGallery(GalleryPayload(position, parent.relativePath)))
         }
     }
 
@@ -134,34 +142,18 @@ class GraveyardsViewModel @Inject constructor(
     }
 
     private fun handleOnAddFolderClick() {
-        updateUiState { state ->
-            state.copy(
-                newItemDialog = FolderItem.Folder(name = "", path = parentFolders.joinToString("/") { it.name })
-            )
-        }
-    }
-
-    private fun handleOnAddImageFileClick() {
-        updateUiState { state ->
-            state.copy(
-                newItemDialog = FolderItem.ImageFile(name = "", path = parentFolders.joinToString("/") { it.name })
-            )
-        }
+        updateUiState { it.copy(newItemDialog = FolderItem.Folder(name = "")) }
     }
 
     private fun handleOnAddTextFileClick() {
-        updateUiState { state ->
-            state.copy(
-                newItemDialog = FolderItem.TextFile(name = "", path = parentFolders.joinToString("/") { it.name })
-            )
-        }
+        updateUiState { it.copy(newItemDialog = FolderItem.DocumentFile(name = "", type = FolderItem.DocumentFile.DocumentType.TXT)) }
     }
 
     private fun handleOnItemNameInput(name: String) = updateUiState {
         it.copy(newItemDialog = when(it.newItemDialog) {
             is FolderItem.Folder -> it.newItemDialog.copy(name = name)
             is FolderItem.ImageFile -> it.newItemDialog.copy(name = name)
-            is FolderItem.TextFile -> it.newItemDialog.copy(name = name)
+            is FolderItem.DocumentFile -> it.newItemDialog.copy(name = name)
             else -> null
         })
     }
@@ -169,10 +161,10 @@ class GraveyardsViewModel @Inject constructor(
     private fun handleOnDismissItemDialog() = updateUiState { it.copy(newItemDialog = null) }
 
     private fun handleOnItemNameConfirm() = viewModelScopeErrorHandled.launch {
+        val path = parentFolders.joinToString("/") { it.name }
         when(val item = uiState.value.newItemDialog) {
-            is FolderItem.Folder -> filesRepository.createFolderItem(item.copy(name = item.name.trim()))
-            is FolderItem.ImageFile -> {}
-            is FolderItem.TextFile -> {}
+            is FolderItem.Folder -> filesRepository.createFolderItem(item.copy(name = item.name.trim()), relativePath = path)
+            is FolderItem.DocumentFile -> filesRepository.createFolderItem(item.copy(name = item.name.trim()), relativePath = path)
             else -> {}
         }
         val folderItems = getFolderItems()
@@ -184,33 +176,19 @@ class GraveyardsViewModel @Inject constructor(
         }
     }
 
-    private var currentPhotoRow: FolderItem.PhotoRow? = null
-
-    private fun handleOnTakePhotoClick(photoRow: FolderItem.PhotoRow) = viewModelScopeErrorHandled.launch {
-//        i++
-//        currentPhotoRow = photoRow
-//        val item = FolderItem.ImageFile(
-//            name = parentFolders.joinToString("_") + "_${photoRow.name}" + "_фото$i",
-//            path = photoRow.path
-//        )
-//        val uri = filesRepository.createFolderItem(item)
-        sendUiEvent(GraveyardsUiEvent.NavigateToCamera(CameraPayload(photoRow.path)))
-    }
-
-    private fun handleOnRepeatPhoto() {
-        currentPhotoRow?.let { handleOnTakePhotoClick(it) }
-    }
-
-    private fun handleOnStopTakePhotos() {
-        currentPhotoRow = null
+    private fun handleOnTakePhotoClick(folder: FolderItem.Folder) {
+        sendUiEvent(GraveyardsUiEvent.NavigateToCamera(CameraPayload(folder.relativePath)))
     }
 
     private fun handleOnPhotoClick(item: FolderItem.ImageFile) {
-        updateUiState { it.copy(photoView = item) }
+        val position = uiState.value.folderItems.filterIsInstance<FolderItem.ImageFile>().indexOf(item)
+        if (position != -1) {
+            sendUiEvent(GraveyardsUiEvent.NavigateToGallery(GalleryPayload(position, item.parentFolder)))
+        }
     }
 
-    private fun handleOnClosePhoto() {
-        updateUiState { it.copy(photoView = null) }
+    private fun handleOnDocumentFileClick(item: FolderItem.DocumentFile) {
+        sendUiEvent(GraveyardsUiEvent.OpenInExternalApp(item))
     }
 
     private suspend fun getFolderItems(): List<FolderItem> = getFolderItems(parentFolders, uiState.value.folderLevel)
@@ -224,17 +202,16 @@ class GraveyardsViewModel @Inject constructor(
         FolderLevel.ROWS -> filesRepository.getFolderItems(path).map { item ->
             if (item is FolderItem.Folder) {
                 val rowPath = "$path/${item.name}"
-                FolderItem.PhotoRow(
-                    name = item.name,
-                    path = rowPath,
-                    items = filesRepository.getFolderItems(rowPath)
-                )
+                item.copy(childItems = filesRepository.getFolderItems(rowPath))
             } else item
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private suspend fun getRootFolderItems(): List<FolderItem> {
-        val rootGraveyards = graveyardsRepository.getGraveyards().map { FolderItem.Folder(name = it.prefix, visibleName = it.name) }
+        val rootGraveyards = graveyardsRepository.getGraveyards().map {
+            FolderItem.Folder(id = Uuid.random().toString(), name = it.prefix, visibleName = it.name)
+        }
         val folderItems = filesRepository.getFolderItems("")
         val foldersWithoutDefaults = folderItems.filterNot { root -> rootGraveyards.any { it.name == root.name } }
         return rootGraveyards.plus(foldersWithoutDefaults)

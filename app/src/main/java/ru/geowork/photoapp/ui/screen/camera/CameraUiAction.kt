@@ -3,6 +3,8 @@ package ru.geowork.photoapp.ui.screen.camera
 import ru.geowork.photoapp.ui.base.UiAction
 
 sealed class CameraUiAction: UiAction {
+    data object OnUpdateFolderItems: CameraUiAction()
+
     data class OnZoomLevelsResolved(
         val minZoom: Float,
         val maxZoom: Float
@@ -18,7 +20,11 @@ sealed class CameraUiAction: UiAction {
     data class OnZoomSelected(val value: Float): CameraUiAction()
     data object SwitchGrid: CameraUiAction()
     data object SwitchExposureMenu: CameraUiAction()
+
     data object OnTakePhotoClick: CameraUiAction()
     data object OnPhotoTaken: CameraUiAction()
+
+    data class OnPhotoClick(val position: Int): CameraUiAction()
+
     data object NavigateBack: CameraUiAction()
 }

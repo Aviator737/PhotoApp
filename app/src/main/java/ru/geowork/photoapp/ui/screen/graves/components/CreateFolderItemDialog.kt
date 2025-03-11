@@ -29,8 +29,7 @@ fun CreateFolderItemDialog(
                 FolderLevel.ROWS -> stringResource(R.string.graves_add_row)
             }
             is FolderItem.ImageFile -> stringResource(R.string.graves_add_image_file)
-            is FolderItem.TextFile -> stringResource(R.string.graves_add_text_file)
-            else -> ""
+            is FolderItem.DocumentFile -> stringResource(R.string.graves_add_text_file)
         },
         onDismiss = onDismiss,
         onConfirm = onConfirm
@@ -43,8 +42,8 @@ fun CreateFolderItemDialog(
                     FolderLevel.BLOCKS -> stringResource(R.string.graves_add_block)
                     FolderLevel.ROWS -> stringResource(R.string.graves_add_row)
                 }
-                is FolderItem.TextFile -> stringResource(R.string.graves_add_text_file_hint)
-                else -> ""
+                is FolderItem.ImageFile -> ""
+                is FolderItem.DocumentFile -> stringResource(R.string.graves_add_text_file_hint)
             },
             text = item.name,
             onInput = onNameInput

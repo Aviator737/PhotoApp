@@ -25,6 +25,14 @@ class AppColors(
     val accentBorder: Color,        //Для обводок
     val accentBackground: Color,    //Для подложек
 
+    //system: Используются для стилизации характера системны сообщений (ошибка, успех, предупреждение)
+    val systemSuccessPrimary: Color,   //Стилизация состояния успеха
+    val systemSuccessBackground: Color, //Для подложек
+    val systemErrorPrimary: Color,   //Стилизация состояния ошибки
+    val systemErrorBackground: Color, //Для подложек
+    val systemWarningPrimary: Color,   //Стилизация состояния предупреждения
+    val systemWarningBackground: Color, //Для подложек
+
     //background: Используются для стилизации фоновых слоев (Области на которых расположен контент)
     val backgroundPrimary: Color,   //Нижний слой, на котором размещается все остальное
     val backgroundSecondary: Color, //Второй слой, для размещения навигации

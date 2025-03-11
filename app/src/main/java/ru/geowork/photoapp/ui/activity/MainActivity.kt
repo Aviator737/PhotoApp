@@ -45,6 +45,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (!Environment.isExternalStorageManager()) {
+            requestAllFilesPermissions()
+        }
+
         enableEdgeToEdge()
 
         setContent {
@@ -77,9 +81,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-        }
-        if (!Environment.isExternalStorageManager()) {
-            requestAllFilesPermissions()
         }
     }
 

@@ -23,20 +23,20 @@ fun MainMenu(
 ) {
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
         ListItemWithIcon(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 24.dp),
             name = stringResource(R.string.main_menu_graves),
             endIcon = painterResource(R.drawable.chevron_right),
             onClick = { navigateToGraves() }
         )
         ListItemWithIcon(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 24.dp),
             name = stringResource(R.string.main_menu_poles),
             endIcon = painterResource(R.drawable.chevron_right),
             onClick = { navigateToPoles() }
         )
         Spacer(modifier = Modifier.weight(1f))
         ListItemWithIcon(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 24.dp),
             name = stringResource(R.string.main_menu_settings),
             icon = painterResource(R.drawable.ic_settings),
             endIcon = painterResource(R.drawable.chevron_right),

@@ -11,6 +11,8 @@ import ru.geowork.photoapp.ui.screen.auth.authScreen
 import ru.geowork.photoapp.ui.screen.camera.cameraScreen
 import ru.geowork.photoapp.ui.screen.camera.navigateToCameraScreen
 import ru.geowork.photoapp.ui.screen.foldersync.folderSyncScreen
+import ru.geowork.photoapp.ui.screen.gallery.galleryScreen
+import ru.geowork.photoapp.ui.screen.gallery.navigateToGalleryScreen
 import ru.geowork.photoapp.ui.screen.graves.graveyardsScreen
 import ru.geowork.photoapp.ui.screen.graves.navigateToGraveyardsScreen
 import ru.geowork.photoapp.ui.screen.mainmenu.mainMenuScreen
@@ -72,10 +74,15 @@ fun AppNavigation(
             onBack = { navController.popBackStack() }
         )
         graveyardsScreen(
+            onBack = { navController.popBackStack() },
             navigateToCamera = { navController.navigateToCameraScreen(it) },
-            onBack = { navController.popBackStack() }
+            navigateToGallery = { navController.navigateToGalleryScreen(it) }
         )
         cameraScreen(
+            navigateToGallery = { navController.navigateToGalleryScreen(it) },
+            onBack = { navController.popBackStack() }
+        )
+        galleryScreen(
             onBack = { navController.popBackStack() }
         )
         settingsScreen()

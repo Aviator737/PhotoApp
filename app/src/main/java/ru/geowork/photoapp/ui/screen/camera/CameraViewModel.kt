@@ -10,6 +10,7 @@ import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.data.FilesRepository
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.BaseViewModel
+import ru.geowork.photoapp.ui.screen.gallery.GalleryPayload
 
 @HiltViewModel(assistedFactory = CameraAssistedFactory::class)
 class CameraViewModel @AssistedInject constructor(
@@ -30,23 +31,39 @@ class CameraViewModel @AssistedInject constructor(
 
     init {
         initSettings()
-        getFolderItems()
     }
 
     override fun handleCoroutineException(e: Throwable) {}
 
     override fun onUiAction(uiAction: CameraUiAction) {
         when (uiAction) {
-            is CameraUiAction.OnZoomLevelsResolved -> handleOnZoomLevelsResolved(uiAction.minZoom, uiAction.maxZoom)
+            CameraUiAction.OnUpdateFolderItems -> getFolderItems()
+
+            is CameraUiAction.OnZoomLevelsResolved -> handleOnZoomLevelsResolved(
+                uiAction.minZoom,
+                uiAction.maxZoom
+            )
+
             is CameraUiAction.OnExposureResolved ->
-                handleOnExposureResolved(uiAction.isSupported, uiAction.default, uiAction.step, uiAction.min, uiAction.max)
+                handleOnExposureResolved(
+                    uiAction.isSupported,
+                    uiAction.default,
+                    uiAction.step,
+                    uiAction.min,
+                    uiAction.max
+                )
+
             is CameraUiAction.OnExposureStepSelected -> handleOnExposureStepSelected(uiAction.step)
 
             is CameraUiAction.OnZoomSelected -> handleOnZoomSelected(uiAction.value)
             CameraUiAction.SwitchExposureMenu -> handleSwitchExposureMenu()
             CameraUiAction.SwitchGrid -> handleSwitchGrid()
+
             CameraUiAction.OnTakePhotoClick -> handleOnTakePhotoClick()
             is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken()
+
+            is CameraUiAction.OnPhotoClick -> handleOnPhotoClick(uiAction.position)
+
             CameraUiAction.NavigateBack -> handleNavigateBack()
         }
     }
@@ -58,6 +75,7 @@ class CameraViewModel @AssistedInject constructor(
             if (minZoom != 1f) add(Pair(1f, savedZoom == 1f))
             if (maxZoom > 2f) add(Pair(2f, savedZoom == 2f))
             if (maxZoom > 3f) add(Pair(3f, savedZoom == 3f))
+            if (maxZoom >= 5f) add(Pair(5f, savedZoom == 5f))
         }
         isZoomLevelsInitialized = true
         updateUiState { it.copy(isInitialized = isInitialized, zoomLevels = zoomLevels) }
@@ -126,8 +144,8 @@ class CameraViewModel @AssistedInject constructor(
     private fun handleOnTakePhotoClick() = viewModelScopeErrorHandled.launch {
         val photosCount = uiState.value.items.size
         val name = payload.savePath.replace('/', '_') + "_$photosCount"
-        val imageItem = FolderItem.ImageFile(name = name, path = payload.savePath)
-        filesRepository.createFolderItem(imageItem)?.let { uri ->
+        val imageItem = FolderItem.ImageFile(name = name)
+        filesRepository.createFolderItem(imageItem, payload.savePath)?.let { uri ->
             filesRepository.openOutputStream(uri)?.let { stream ->
                 updateUiState { it.copy(outputStream = stream) }
             }
@@ -137,6 +155,10 @@ class CameraViewModel @AssistedInject constructor(
     private fun handleOnPhotoTaken() = viewModelScopeErrorHandled.launch {
         updateUiState { it.copy(outputStream = null) }
         getFolderItems()
+    }
+
+    private fun handleOnPhotoClick(position: Int) {
+        sendUiEvent(CameraUiEvent.NavigateToGallery(GalleryPayload(position, payload.savePath)))
     }
 
     private fun handleNavigateBack() {

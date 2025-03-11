@@ -26,9 +26,10 @@ fun FileManager(
     modifier: Modifier = Modifier,
     parentFolders: List<FolderItem.Folder>,
     folderItems: List<FolderItem>,
-    onTakePhotoClick: (FolderItem.PhotoRow) -> Unit,
+    onTakePhotoClick: (FolderItem.Folder) -> Unit,
     onParentFolderClick: (FolderItem.Folder) -> Unit,
     onFolderItemClick: (FolderItem) -> Unit,
+    onChildItemClick: (parent: FolderItem.Folder, child: FolderItem) -> Unit,
     createButtons: @Composable () -> Unit
 ) {
     val parentFoldersScrollState = rememberLazyListState()
@@ -46,8 +47,7 @@ fun FileManager(
             verticalAlignment = Alignment.CenterVertically
         ) {
             itemsIndexed(parentFolders) { i, parentFolder ->
-                val name = parentFolder.visibleName ?: parentFolder.name
-                Chip(name) { onParentFolderClick(parentFolder) }
+                Chip(parentFolder.visibleName) { onParentFolderClick(parentFolder) }
                 if (i+1 < parentFolders.size) {
                     Icon(
                         modifier = Modifier.padding(horizontal = 4.dp).size(24.dp),
@@ -58,27 +58,29 @@ fun FileManager(
                 }
             }
         }
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-        ) {
+        LazyColumn {
             items(
                 items = folderItems,
-                key = { "${it.name}-${it.path}" }
+                key = { it.id }
             ) { item ->
-                when(item) {
-                    is FolderItem.PhotoRow -> PhotoRow(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        photoRow = item,
+                when {
+                    item is FolderItem.Folder && item.childItems != null -> PhotoRow(
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp),
+                        folder = item,
                         onTakePhotoClick = { onTakePhotoClick(item) },
-                        onPhotoClick = { onFolderItemClick(it) }
+                        onPhotoClick = { onChildItemClick(item, it) }
                     )
                     else -> ListItemWithIcon(
-                        name = if (item is FolderItem.Folder && item.visibleName != null) item.visibleName else item.name,
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        name = if (item is FolderItem.Folder) item.visibleName else item.name,
                         icon = when (item) {
                             is FolderItem.Folder -> painterResource(R.drawable.folder)
                             is FolderItem.ImageFile -> painterResource(R.drawable.ic_attachment)
-                            is FolderItem.TextFile -> painterResource(R.drawable.ic_text_file)
-                            else -> painterResource(R.drawable.ic_folder_disabled)
+                            is FolderItem.DocumentFile -> when(item.type) {
+                                FolderItem.DocumentFile.DocumentType.PDF -> painterResource(R.drawable.ic_pdf)
+                                FolderItem.DocumentFile.DocumentType.TXT,
+                                FolderItem.DocumentFile.DocumentType.UNKNOWN -> painterResource(R.drawable.ic_text_file)
+                            }
                         },
                         endIcon = when(item) {
                             is FolderItem.Folder -> painterResource(R.drawable.chevron_right)

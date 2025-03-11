@@ -1,4 +1,4 @@
-package ru.geowork.photoapp.ui.screen.camera
+package ru.geowork.photoapp.ui.screen.gallery
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,38 +9,34 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import ru.geowork.photoapp.ui.screen.camera.components.Camera
-import ru.geowork.photoapp.ui.screen.gallery.GalleryPayload
 
-fun NavGraphBuilder.cameraScreen(
-    navigateToGallery: (GalleryPayload) -> Unit,
+fun NavGraphBuilder.galleryScreen(
     onBack: () -> Unit
 ) {
-    composable<CameraPayload> { backStackEntry ->
-        val payload = backStackEntry.toRoute<CameraPayload>()
-        val viewModel = hiltViewModel<CameraViewModel, CameraAssistedFactory> { it.create(payload) }
+    composable<GalleryPayload> { backStackEntry ->
+        val payload = backStackEntry.toRoute<GalleryPayload>()
+        val viewModel = hiltViewModel<GalleryViewModel, GalleryAssistedFactory> { it.create(payload) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val uiEvents by viewModel.uiEvents.collectAsStateWithLifecycle()
 
         uiEvents.firstOrNull()?.let { event ->
             LaunchedEffect(uiEvents.firstOrNull()) {
                 when(event) {
-                    is CameraUiEvent.NavigateToGallery -> navigateToGallery(event.payload)
-                    CameraUiEvent.NavigateBack -> onBack()
+                    GalleryUiEvent.NavigateBack -> onBack()
                 }
             }
             viewModel.onUiEventHandled(event)
         }
 
-        Camera(
+        Gallery(
             state = uiState,
             onUiAction = { viewModel.onUiAction(it) }
         )
     }
 }
 
-fun NavController.navigateToCameraScreen(
-    payload: CameraPayload,
+fun NavController.navigateToGalleryScreen(
+    payload: GalleryPayload,
     builder: NavOptionsBuilder.() -> Unit = {}
 ) {
     navigate(

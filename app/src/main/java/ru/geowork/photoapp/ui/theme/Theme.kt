@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -38,6 +39,12 @@ private val extendedLightColorScheme = AppColors(
     accentDisabled = AccentDisabledLight,
     accentBorder = AccentBorderLight,
     accentBackground = AccentBackgroundLight,
+    systemSuccessPrimary = SystemSuccessPrimaryLight,
+    systemSuccessBackground = SystemSuccessPrimaryLight,
+    systemErrorPrimary = SystemErrorPrimaryLight,
+    systemErrorBackground = SystemErrorBackgroundLight,
+    systemWarningPrimary = SystemWarningPrimaryLight,
+    systemWarningBackground = SystemWarningBackgroundLight,
     backgroundPrimary = BackgroundPrimaryLight,
     backgroundSecondary = BackgroundSecondaryLight,
     backgroundModal = BackgroundModalLight,
@@ -65,6 +72,12 @@ private val extendedDarkColorScheme = AppColors(
     accentDisabled = AccentDisabledDark,
     accentBorder = AccentBorderDark,
     accentBackground = AccentBackgroundDark,
+    systemSuccessPrimary = SystemSuccessPrimaryDark,
+    systemSuccessBackground = SystemSuccessPrimaryDark,
+    systemErrorPrimary = SystemErrorPrimaryDark,
+    systemErrorBackground = SystemErrorBackgroundDark,
+    systemWarningPrimary = SystemWarningPrimaryDark,
+    systemWarningBackground = SystemWarningBackgroundDark,
     backgroundPrimary = BackgroundPrimaryDark,
     backgroundSecondary = BackgroundSecondaryDark,
     backgroundModal = BackgroundModalDark,

@@ -2,7 +2,6 @@ package ru.geowork.photoapp.ui.screen.camera.components
 
 import android.Manifest
 import android.content.Context
-import android.net.Uri
 import android.util.Rational
 import android.util.Size
 import android.view.Surface
@@ -27,6 +26,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +43,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
@@ -64,7 +65,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toFile
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.awaitCancellation
@@ -74,11 +75,11 @@ import ru.geowork.photoapp.R
 import ru.geowork.photoapp.ui.components.WithPermissions
 import ru.geowork.photoapp.ui.screen.camera.CameraUiAction
 import ru.geowork.photoapp.ui.screen.camera.CameraUiState
+import ru.geowork.photoapp.ui.screen.graves.GraveyardsUiAction
 import ru.geowork.photoapp.ui.theme.AppTheme
 import ru.geowork.photoapp.ui.theme.BackgroundSecondaryDark
 import ru.geowork.photoapp.util.HideSystemBars
 import ru.geowork.photoapp.util.noRippleClickable
-import java.io.File
 import java.io.OutputStream
 import java.util.Locale
 
@@ -106,6 +107,11 @@ fun Camera(
     val itemsScrollState = rememberLazyListState()
 
     HideSystemBars()
+
+    LifecycleResumeEffect(Unit) {
+        onUiAction(CameraUiAction.OnUpdateFolderItems)
+        onPauseOrDispose {}
+    }
 
     LaunchedEffect(state.outputStream) {
         if (state.outputStream != null) {
@@ -341,7 +347,7 @@ fun Camera(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(state.items) { item ->
+            itemsIndexed(state.items) { index, item ->
                 AsyncImage(
                     model = item.uri,
                     contentDescription = null,
@@ -349,6 +355,7 @@ fun Camera(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(8.dp))
+                        .clickable { onUiAction(CameraUiAction.OnPhotoClick(index)) }
                 )
             }
         }
