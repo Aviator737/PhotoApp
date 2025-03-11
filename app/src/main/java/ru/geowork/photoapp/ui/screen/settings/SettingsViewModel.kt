@@ -34,7 +34,7 @@ class SettingsViewModel @Inject constructor(
         val intValue = value.toIntOrNull()
         setImageQualityJob?.cancel()
         setImageQualityJob = viewModelScopeErrorHandled.launch {
-            val fixValue = if (intValue == null || intValue !in 10..100) 80 else intValue
+            val fixValue = if (intValue == null || intValue !in 10..100) 90 else intValue
             dataStoreRepository.saveImageQuality(fixValue)
             delay(1500)
             updateUiState { it.copy(imageQuality = fixValue.toString()) }

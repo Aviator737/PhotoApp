@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.util.Rational
 import android.util.Size
+import android.view.HapticFeedbackConstants
 import android.view.Surface
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
@@ -59,9 +60,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -88,6 +91,7 @@ fun Camera(
     state: CameraUiState,
     onUiAction: (CameraUiAction) -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -264,7 +268,10 @@ fun Camera(
                                 ZoomButton(
                                     value = it.first,
                                     isActive = it.second,
-                                    onClick = { onUiAction(CameraUiAction.OnZoomSelected(it.first)) }
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType(HapticFeedbackConstants.VIRTUAL_KEY))
+                                        onUiAction(CameraUiAction.OnZoomSelected(it.first))
+                                    }
                                 )
                             }
                         }

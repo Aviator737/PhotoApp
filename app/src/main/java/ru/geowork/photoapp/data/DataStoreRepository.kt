@@ -32,7 +32,7 @@ class DataStoreRepository @Inject constructor(
     suspend fun saveCameraExposure(value: Int) { dataStore.edit { it[CAMERA_EXPOSURE_COMPENSATION_INDEX] = value } }
     suspend fun saveCameraZoom(value: Float) { dataStore.edit { it[CAMERA_ZOOM] = value } }
 
-    suspend fun getImageQuality(): Int = dataStore.data.map { it[IMAGE_QUALITY] }.firstOrNull() ?: 80
+    suspend fun getImageQuality(): Int = dataStore.data.map { it[IMAGE_QUALITY] }.firstOrNull() ?: 90
     suspend fun saveImageQuality(value: Int) { dataStore.edit { it[IMAGE_QUALITY] = value } }
 
     companion object {

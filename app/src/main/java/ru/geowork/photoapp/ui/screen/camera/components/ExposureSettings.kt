@@ -1,5 +1,6 @@
 package ru.geowork.photoapp.ui.screen.camera.components
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -14,8 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import ru.geowork.photoapp.ui.screen.camera.CameraUiState
 import ru.geowork.photoapp.ui.screen.camera.CameraUiState.ExposureState.Step.Companion.findClosestElement
@@ -28,6 +31,9 @@ fun ExposureCompensationSettings(
     onSelected: (CameraUiState.ExposureState.Step) -> Unit
 ) {
     if (state.steps.isEmpty()) return
+
+    val haptic = LocalHapticFeedback.current
+
     var sliderWidth by remember { mutableFloatStateOf(0f) }
     val stepWidth = sliderWidth / state.steps.size
     var valueOffset by remember { mutableFloatStateOf((state.selectedStep?.value ?: 0f) * stepWidth) }
@@ -43,6 +49,7 @@ fun ExposureCompensationSettings(
                     valueOffset = newValue
                     println(valueOffset)
                     state.steps.findClosestElement(newValue)?.let { onSelected(it) }
+                    haptic.performHapticFeedback(HapticFeedbackType(HapticFeedbackConstants.CLOCK_TICK))
                 }
             },
         horizontalArrangement = Arrangement.SpaceBetween,
