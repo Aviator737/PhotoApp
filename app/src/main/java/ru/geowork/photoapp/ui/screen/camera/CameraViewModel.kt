@@ -76,6 +76,7 @@ class CameraViewModel @AssistedInject constructor(
             if (maxZoom > 2f) add(Pair(2f, savedZoom == 2f))
             if (maxZoom > 3f) add(Pair(3f, savedZoom == 3f))
             if (maxZoom >= 5f) add(Pair(5f, savedZoom == 5f))
+            if (maxZoom > 5f) add(Pair(maxZoom, savedZoom == maxZoom))
         }
         isZoomLevelsInitialized = true
         updateUiState { it.copy(isInitialized = isInitialized, zoomLevels = zoomLevels) }

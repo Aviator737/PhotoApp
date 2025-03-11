@@ -68,6 +68,8 @@ fun GravesWrapper(
                     iconPainter = painterResource(R.drawable.more_vertical),
                     onClick = onOptionsClick
                 )
+            } else {
+                Spacer(Modifier.size(40.dp))
             }
         }
         content()

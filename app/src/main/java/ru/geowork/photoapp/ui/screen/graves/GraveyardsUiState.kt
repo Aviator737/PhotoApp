@@ -5,7 +5,7 @@ import ru.geowork.photoapp.ui.base.UiState
 
 data class GraveyardsUiState(
     val showBackButton: Boolean = true,
-    val showOptionsButton: Boolean = true,
+    val showOptionsButton: Boolean = false,
     val isEditMode: Boolean = false,
 
     val folderLevel: FolderLevel,
