@@ -25,7 +25,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.1.0"
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -33,6 +33,11 @@ android {
         }
 
         buildConfigField("String", "APP_FOLDER_NAME", "\"GWApp\"")
+
+        buildConfigField("String", "SFTP_HOST", "\"ftp.geowork.org\"")
+        buildConfigField("int", "SFTP_PORT", "22")
+        buildConfigField("String", "SFTP_LOGIN", "\"test_file_upload\"")
+        buildConfigField("String", "SFTP_PASSWORD", "\"testPass123\"")
     }
 
     signingConfigs {
@@ -124,6 +129,9 @@ dependencies {
     kaptTest(libs.hilt.android.compiler)
 
     implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.zelory.compressor)
+    implementation(libs.exifinterface)
 
     //Firebase
     implementation(platform(libs.firebase.bom))

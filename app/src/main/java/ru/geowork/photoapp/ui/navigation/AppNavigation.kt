@@ -10,7 +10,6 @@ import androidx.navigation.compose.rememberNavController
 import ru.geowork.photoapp.ui.screen.auth.authScreen
 import ru.geowork.photoapp.ui.screen.camera.cameraScreen
 import ru.geowork.photoapp.ui.screen.camera.navigateToCameraScreen
-import ru.geowork.photoapp.ui.screen.foldersync.folderSyncScreen
 import ru.geowork.photoapp.ui.screen.gallery.galleryScreen
 import ru.geowork.photoapp.ui.screen.gallery.navigateToGalleryScreen
 import ru.geowork.photoapp.ui.screen.graves.graveyardsScreen
@@ -19,6 +18,8 @@ import ru.geowork.photoapp.ui.screen.mainmenu.mainMenuScreen
 import ru.geowork.photoapp.ui.screen.mainmenu.navigateToMainMenuScreen
 import ru.geowork.photoapp.ui.screen.settings.navigateToSettingsScreen
 import ru.geowork.photoapp.ui.screen.settings.settingsScreen
+import ru.geowork.photoapp.ui.screen.upload.navigateToUploadScreen
+import ru.geowork.photoapp.ui.screen.upload.uploadScreen
 
 @Composable
 fun AppNavigation(
@@ -70,19 +71,20 @@ fun AppNavigation(
             navigateToPoles = {},
             navigateToSettings = { navController.navigateToSettingsScreen() }
         )
-        folderSyncScreen(
-            onBack = { navController.popBackStack() }
-        )
         graveyardsScreen(
             onBack = { navController.popBackStack() },
             navigateToCamera = { navController.navigateToCameraScreen(it) },
-            navigateToGallery = { navController.navigateToGalleryScreen(it) }
+            navigateToGallery = { navController.navigateToGalleryScreen(it) },
+            navigateToUpload = { navController.navigateToUploadScreen(it) },
         )
         cameraScreen(
             navigateToGallery = { navController.navigateToGalleryScreen(it) },
             onBack = { navController.popBackStack() }
         )
         galleryScreen(
+            onBack = { navController.popBackStack() }
+        )
+        uploadScreen(
             onBack = { navController.popBackStack() }
         )
         settingsScreen()

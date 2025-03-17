@@ -5,11 +5,14 @@ import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import ru.geowork.photoapp.di.DispatcherDefault
 import ru.geowork.photoapp.di.DispatcherIo
 import ru.geowork.photoapp.model.FolderItem
+import ru.geowork.photoapp.util.compressImage
 import ru.geowork.photoapp.util.createFileLikeExt
 import ru.geowork.photoapp.util.createFileLikeUri
 import ru.geowork.photoapp.util.deleteFile
+import ru.geowork.photoapp.util.deleteFolderRecursively
 import ru.geowork.photoapp.util.getExtensionFromMimeType
 import ru.geowork.photoapp.util.getFiles
 import ru.geowork.photoapp.util.openInputStream
@@ -21,6 +24,7 @@ import javax.inject.Singleton
 class FilesRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     @DispatcherIo private val dispatcherIo: CoroutineDispatcher,
+    @DispatcherDefault private val dispatcherDefault: CoroutineDispatcher,
     private val dataStoreRepository: DataStoreRepository
 ) {
 
@@ -32,13 +36,13 @@ class FilesRepository @Inject constructor(
         }
         return context.createFileLikeExt(
             fileName = folderItem.name,
-            path = getAccountPath(relativePath),
+            path = getPath(relativePath),
             ext = fileExt
         )
     }
 
     suspend fun getFolderItems(path: String) = withContext(dispatcherIo) {
-        val mediaStoreFiles = context.getFiles(getAccountPath(path))
+        val mediaStoreFiles = context.getFiles(getPath(path))
         mediaStoreFiles.map { mediaStoreFile ->
             val id = mediaStoreFile.id.toString()
             val fileExt = getExtensionFromMimeType(mediaStoreFile.mimeType) ?: ""
@@ -47,8 +51,7 @@ class FilesRepository @Inject constructor(
                     id = id,
                     name = mediaStoreFile.displayName,
                     uri = mediaStoreFile.uri,
-                    relativePath = "$path/${mediaStoreFile.displayName}",
-                    visibleName = mediaStoreFile.displayName
+                    relativePath = "$path/${mediaStoreFile.displayName}"
                 )
                 FolderItem.ImageFile.ImageType.entries.map { it.extension }.contains(fileExt) -> FolderItem.ImageFile(
                     id = id,
@@ -69,7 +72,7 @@ class FilesRepository @Inject constructor(
     }
 
     suspend fun copyFromUri(sourceUri: Uri, fileName: String, path: String) = withContext(dispatcherIo) {
-        context.createFileLikeUri(sourceUri, fileName, getAccountPath(path))?.let { newUri ->
+        context.createFileLikeUri(sourceUri, fileName, getPath(path))?.let { newUri ->
             context.openInputStream(sourceUri)?.use { inputStream ->
                 context.openOutputStream(newUri)?.use { outputStream ->
                     inputStream.copyTo(outputStream)
@@ -90,7 +93,30 @@ class FilesRepository @Inject constructor(
         context.deleteFile(uri)
     }
 
+    suspend fun deleteFolder(folderItem: FolderItem.Folder) = withContext(dispatcherIo) {
+        if (folderItem.uri == null) return@withContext
+        context.deleteFolderRecursively(folderItem.uri)
+    }
+
+    suspend fun compressImage(uri: Uri): Boolean = withContext(dispatcherIo) {
+        val maxSize = dataStoreRepository.getMaxImageSize() * 1024L
+        withContext(dispatcherDefault) {
+            context.compressImage(uri, maxSize)
+        }
+    }
+
+    private suspend fun getCollectionModeFolder(): String {
+        val isEdit = dataStoreRepository.getCollectionMode()
+        return if (isEdit) EDIT_MODE_FOLDER_NAME else NORMAL_MODE_FOLDER_NAME
+    }
+
     private suspend fun getAccountFolder() = dataStoreRepository.getPhotographName()
 
-    private suspend fun getAccountPath(relativePath: String) = "${getAccountFolder()}/$relativePath"
+    private suspend fun getPath(relativePath: String) =
+        "${getAccountFolder()}/$relativePath"
+
+    companion object {
+        private const val EDIT_MODE_FOLDER_NAME = "корректировки"
+        private const val NORMAL_MODE_FOLDER_NAME = "сбор_участков"
+    }
 }

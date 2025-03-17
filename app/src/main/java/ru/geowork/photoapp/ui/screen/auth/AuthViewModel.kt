@@ -132,6 +132,6 @@ class AuthViewModel @Inject constructor(
     }
 
     companion object {
-        private val SUPERVISORS = listOf("Михаил Кулешов", "Сергей Новиков")
+        private val SUPERVISORS = listOf("Михаил Кулешов", "Сергей Новиков", "Кирилл Банкович")
     }
 }

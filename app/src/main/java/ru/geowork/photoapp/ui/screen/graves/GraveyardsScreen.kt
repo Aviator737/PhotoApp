@@ -16,13 +16,15 @@ import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.screen.camera.CameraPayload
 import ru.geowork.photoapp.ui.screen.gallery.GalleryPayload
 import ru.geowork.photoapp.ui.screen.graves.components.Graveyards
+import ru.geowork.photoapp.ui.screen.upload.UploadPayload
 
 const val GRAVEYARDS_SCREEN_ID = "graveyards_screen"
 
 fun NavGraphBuilder.graveyardsScreen(
     onBack: () -> Unit,
     navigateToCamera: (CameraPayload) -> Unit,
-    navigateToGallery: (GalleryPayload) -> Unit
+    navigateToGallery: (GalleryPayload) -> Unit,
+    navigateToUpload: (UploadPayload) -> Unit
 ) {
     composable(GRAVEYARDS_SCREEN_ID) {
         val viewModel: GraveyardsViewModel = hiltViewModel()
@@ -38,6 +40,7 @@ fun NavGraphBuilder.graveyardsScreen(
                 when(uiEvent) {
                     is GraveyardsUiEvent.NavigateToCamera -> navigateToCamera(uiEvent.payload)
                     is GraveyardsUiEvent.NavigateToGallery -> navigateToGallery(uiEvent.payload)
+                    is GraveyardsUiEvent.NavigateToUpload -> navigateToUpload(uiEvent.payload)
                     is GraveyardsUiEvent.OpenInExternalApp -> context.openInExternalApp(uiEvent.item)
                     GraveyardsUiEvent.NavigateBack -> onBack()
                 }

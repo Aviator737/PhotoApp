@@ -4,5 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CameraPayload(
+    val name: String,
     val savePath: String
 )

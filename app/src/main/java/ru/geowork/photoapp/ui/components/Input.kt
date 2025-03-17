@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -48,6 +49,7 @@ fun Input(
     endIcon: Painter? = null,
     singleLine: Boolean = true,
     enabled: Boolean = true,
+    initialFocusIndex: Int = text.length,
     keyboardType: KeyboardType = KeyboardType.Unspecified,
     modifier: Modifier = Modifier,
     onInput: (String) -> Unit = {}
@@ -56,7 +58,7 @@ fun Input(
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    var textFieldValueState by remember { mutableStateOf(TextFieldValue(text)) }
+    var textFieldValueState by remember { mutableStateOf(TextFieldValue(text, selection = TextRange(initialFocusIndex))) }
 
     val textValue = textFieldValueState.copy(text = text)
 
@@ -74,7 +76,7 @@ fun Input(
 
     BasicTextField(
         textStyle = AppTheme.typography.regular16.copy(
-            color = AppTheme.colors.contentPrimary
+            color = if (enabled) AppTheme.colors.contentPrimary else AppTheme.colors.contentDisabled
         ),
         cursorBrush = SolidColor(colors.contentPrimary),
         value = textValue,
@@ -96,7 +98,10 @@ fun Input(
                     shape = RoundedCornerShape(12.dp),
                 )
                 .fillMaxWidth()
-                .background(AppTheme.colors.backgroundPrimary, RoundedCornerShape(12.dp))
+                .background(
+                    color = if (enabled) AppTheme.colors.backgroundPrimary else AppTheme.colors.contentBackground,
+                    shape = RoundedCornerShape(12.dp)
+                )
                 .padding(horizontal = 16.dp, vertical = 6.dp)
                 .then(if (!isEditing) Modifier.noRippleClickable { focusRequester.requestFocus() } else Modifier),
                 verticalAlignment = Alignment.CenterVertically

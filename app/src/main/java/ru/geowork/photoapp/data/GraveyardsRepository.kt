@@ -33,4 +33,6 @@ class GraveyardsRepository @Inject constructor() {
         Graveyard("Черкизовское (Северное)", "CheS"),
         Graveyard("Перепечинское", "Per")
     )
+
+    fun getGraveyardPrefix(name: String): String? = getGraveyards().firstOrNull { it.name == name }?.prefix
 }

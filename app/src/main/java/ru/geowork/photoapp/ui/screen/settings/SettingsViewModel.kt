@@ -25,24 +25,23 @@ class SettingsViewModel @Inject constructor(
 
     override fun onUiAction(uiAction: SettingsUiAction) {
         when(uiAction) {
-            is SettingsUiAction.OnImageQualityInput -> handleOnImageQualityInput(uiAction.value)
+            is SettingsUiAction.OnImageMaxSizeInput -> handleOnImageMaxSizeInput(uiAction.value)
         }
     }
 
-    private fun handleOnImageQualityInput(value: String) {
-        updateUiState { it.copy(imageQuality = value) }
-        val intValue = value.toIntOrNull()
+    private fun handleOnImageMaxSizeInput(value: String) {
+        updateUiState { it.copy(maxImageSize = value) }
         setImageQualityJob?.cancel()
         setImageQualityJob = viewModelScopeErrorHandled.launch {
-            val fixValue = if (intValue == null || intValue !in 10..100) 90 else intValue
-            dataStoreRepository.saveImageQuality(fixValue)
-            delay(1500)
-            updateUiState { it.copy(imageQuality = fixValue.toString()) }
+            delay(1000)
+            val fixValue = value.toIntOrNull() ?: dataStoreRepository.getMaxImageSize()
+            dataStoreRepository.saveMaxImageSize(fixValue)
+            updateUiState { it.copy(maxImageSize = fixValue.toString()) }
         }
     }
 
     private fun initSettings() = viewModelScopeErrorHandled.launch {
-        val imageQuality = dataStoreRepository.getImageQuality()
-        updateUiState { it.copy(imageQuality = imageQuality.toString()) }
+        val imageQuality = dataStoreRepository.getMaxImageSize()
+        updateUiState { it.copy(maxImageSize = imageQuality.toString()) }
     }
 }

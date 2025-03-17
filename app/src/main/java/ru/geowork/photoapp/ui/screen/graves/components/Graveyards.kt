@@ -5,8 +5,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.ButtonDefaults
@@ -17,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import ru.geowork.photoapp.R
+import ru.geowork.photoapp.ui.components.AppDialog
 import ru.geowork.photoapp.ui.components.ButtonLarge
 import ru.geowork.photoapp.ui.components.Chip
 import ru.geowork.photoapp.ui.components.FileManager
@@ -30,6 +33,10 @@ fun Graveyards(
     state: GraveyardsUiState,
     onUiAction: (GraveyardsUiAction) -> Unit
 ) {
+
+    val newBlockPrefix = stringResource(R.string.graves_add_block_prefix)
+    val newRowPrefix = stringResource(R.string.graves_add_row_prefix)
+    val folderPostfix = if (state.isEditMode) stringResource(R.string.graves_edit_mode_postfix) else ""
 
     val mapFileName = stringResource(R.string.graves_block_map_file_name)
     val pickFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { imageUri ->
@@ -48,7 +55,7 @@ fun Graveyards(
         showOptionsButton = state.showOptionsButton,
         onModeSwitchClick = { onUiAction(GraveyardsUiAction.SetIsEditMode(it)) },
         onBackClick = { onUiAction(GraveyardsUiAction.OnBack) },
-        onOptionsClick = {}
+        onOptionsClick = { onUiAction(GraveyardsUiAction.OnOptionsClick) }
     ) {
         if (state.folderLevel == FolderLevel.GRAVEYARDS) {
             Box(modifier = Modifier.padding(top = 8.dp, start = 24.dp)) {
@@ -70,12 +77,21 @@ fun Graveyards(
             ) {
                 if (state.folderLevel != FolderLevel.GRAVEYARDS) {
                     ButtonLarge(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
                         colors = ButtonDefaults.buttonColors(
                             backgroundColor = AppTheme.colors.contentBackground,
                             contentColor = AppTheme.colors.contentPrimary
                         ),
-                        onClick = { onUiAction(GraveyardsUiAction.OnAddFolderClick) }
+                        onClick = {
+                            val prefix = when(state.folderLevel) {
+                                FolderLevel.GRAVEYARDS -> ""
+                                FolderLevel.BLOCKS -> newBlockPrefix
+                                FolderLevel.ROWS -> newRowPrefix
+                            }
+                            onUiAction(GraveyardsUiAction.OnAddFolderClick(prefix, folderPostfix))
+                        }
                     ) {
                         Text(
                             text = when (state.folderLevel) {
@@ -89,7 +105,9 @@ fun Graveyards(
                 }
                 if (state.folderLevel == FolderLevel.ROWS) {
                     ButtonLarge(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
                         colors = ButtonDefaults.buttonColors(
                             backgroundColor = AppTheme.colors.contentBackground,
                             contentColor = AppTheme.colors.contentPrimary
@@ -119,13 +137,71 @@ fun Graveyards(
         }
     }
 
+    if (state.optionsDialog) {
+        AppDialog(
+            title = stringResource(R.string.graves_options_title),
+            onDismiss = { onUiAction(GraveyardsUiAction.OnOptionsDismiss) },
+            onConfirm = null
+        ) {
+            Spacer(modifier = Modifier.height(24.dp))
+//            ButtonLarge(
+//                modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
+//                colors = ButtonDefaults.buttonColors(
+//                    backgroundColor = AppTheme.colors.accentBackground,
+//                    contentColor = AppTheme.colors.accentPrimary
+//                ),
+//                onClick = { onUiAction(GraveyardsUiAction.OnNavigateToUploadClick) }
+//            ) {
+//                Text(
+//                    text = stringResource(R.string.graves_options_end),
+//                    style = AppTheme.typography.semibold16
+//                )
+//            }
+//            Spacer(modifier = Modifier.height(12.dp))
+            ButtonLarge(
+                modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = AppTheme.colors.systemErrorPrimary,
+                    contentColor = AppTheme.colors.contentConstant
+                ),
+                onClick = { onUiAction(GraveyardsUiAction.OnDeleteRequestClick) }
+            ) {
+                Text(
+                    text = stringResource(R.string.graves_options_remove_folder, state.parentFolders.last().name),
+                    style = AppTheme.typography.semibold16
+                )
+            }
+        }
+    }
+
     state.newItemDialog?.let { item ->
         CreateFolderItemDialog(
-            item = item,
+            item = item.item,
+            initialFocusIndex = item.focusIndex,
             folderLevel = state.folderLevel,
             onNameInput = { onUiAction(GraveyardsUiAction.OnItemNameInput(it)) },
             onDismiss = { onUiAction(GraveyardsUiAction.OnDismissItemDialog) },
             onConfirm = { onUiAction(GraveyardsUiAction.OnItemNameConfirm) }
         )
+    }
+
+    state.deleteConfirmationDialog?.let {
+        AppDialog(
+            dismissButtonText = stringResource(R.string.cancel),
+            confirmButtonText = stringResource(R.string.delete),
+            title = stringResource(R.string.confirm_delete_title),
+            confirmButtonColors = ButtonDefaults.buttonColors(
+                backgroundColor = AppTheme.colors.systemErrorPrimary,
+                contentColor = AppTheme.colors.contentConstant
+            ),
+            onDismiss = { onUiAction(GraveyardsUiAction.OnDeleteDismissClick) },
+            onConfirm = { onUiAction(GraveyardsUiAction.OnDeleteConfirmedClick) }
+        ) {
+            Text(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                text = stringResource(R.string.confirm_delete_text, it.name),
+                color = AppTheme.colors.contentPrimary
+            )
+        }
     }
 }

@@ -1,5 +1,6 @@
 package ru.geowork.photoapp.ui.screen.camera
 
+import android.net.Uri
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.base.UiState
 import java.io.OutputStream
@@ -8,9 +9,7 @@ import kotlin.math.abs
 data class CameraUiState(
     val isInitialized: Boolean = false,
 
-    val outputStream: OutputStream? = null,
-
-    val imageQuality: Int? = null,
+    val takePhoto: TakePhotoState? = null,
 
     val exposureState: ExposureState = ExposureState(),
 
@@ -18,6 +17,10 @@ data class CameraUiState(
     val showGrid: Boolean = false,
     val items: List<FolderItem.ImageFile> = listOf()
 ): UiState {
+    data class TakePhotoState(
+        val uri: Uri,
+        val outputStream: OutputStream
+    )
 
     data class ExposureState(
         val isVisible: Boolean = false,

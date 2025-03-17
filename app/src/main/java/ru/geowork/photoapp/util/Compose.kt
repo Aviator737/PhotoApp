@@ -1,5 +1,7 @@
 package ru.geowork.photoapp.util
 
+import android.content.Context
+import android.view.OrientationEventListener
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

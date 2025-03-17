@@ -44,7 +44,6 @@ sealed class FolderItem {
         override val name: String = "",
         override val uri: Uri? = null,
         val relativePath: String = "", //path without /app_folder_name/account_folder/
-        val visibleName: String = "",
         val childItems: List<FolderItem>? = null
     ): FolderItem()
 }

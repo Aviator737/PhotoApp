@@ -36,6 +36,10 @@
     <string name="graves_add_image_file">Загрузить карту квартала</string>
     <string name="graves_add_text_file">Создать заметку</string>
 
+    <string name="graves_add_block_prefix">Квартал_</string>
+    <string name="graves_add_row_prefix">Ряд_</string>
+    <string name="graves_edit_mode_postfix">_корректировки</string>
+    <string name="graves_edit_mode_postfix_short">korr</string>
     <string name="graves_add_graveyard_hint">Название погоста</string>
     <string name="graves_add_block_hint">Название квартала</string>
     <string name="graves_add_row_hint">Название ряда</string>
@@ -43,11 +47,16 @@
 
     <string name="graves_block_map_file_name">Карта квартала</string>
 
-    <string name="gallery_confirm_delete_title">Подтвердите действие</string>
-    <string name="gallery_confirm_delete_text">Вы действительно хотите удалить %1$s?</string>
+    <string name="graves_options_title">Выберите действие</string>
+    <string name="graves_options_end">Завершить квартал</string>
+    <string name="graves_options_remove_folder">Удалить %1$s</string>
 
-    <string name="settings_image_quality_title">Качество изображений</string>
-    <string name="settings_image_quality_hint">10–100</string>
+    <string name="confirm_delete_title">Подтвердите действие</string>
+    <string name="confirm_delete_text">Вы действительно хотите удалить %1$s?</string>
+
+    <string name="settings_image_max_size_title">Максимальный размер фото</string>
+    <string name="settings_image_max_size_description">Большие фотографии будут сжаты до указанного лимита</string>
+    <string name="settings_image_max_size_hint">Кб</string>
 
     <string name="poles_unavailable">Режим \"опоры\" недоступен</string>
 </resources>

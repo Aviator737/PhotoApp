@@ -9,6 +9,9 @@ import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import androidx.core.database.getStringOrNull
 import ru.geowork.photoapp.BuildConfig
+import java.io.FileNotFoundException
+import kotlin.io.path.Path
+import kotlin.io.path.deleteIfExists
 
 private const val MIME_TYPE_FOLDER = "vnd.android.document/directory"
 private const val MIME_TYPE_IMAGE_JPEG = "image/jpeg"
@@ -45,28 +48,58 @@ fun Context.openOutputStream(uri: Uri) = contentResolver.openOutputStream(uri)
 fun Context.openInputStream(uri: Uri) = contentResolver.openInputStream(uri)
 
 fun Context.getFiles(path: String): List<MediaStoreFile> {
+    val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+    val selection = "${MediaStore.Files.FileColumns.RELATIVE_PATH} = ?"
+    val selectionArgs = arrayOf("$DOCUMENTS_APP_FOLDER/$path/")
+    return getMediaStoreFiles(collection, selection, selectionArgs)
+}
+
+fun Context.deleteFile(uri: Uri) {
+    contentResolver.delete(uri, null, null)
+}
+
+fun Context.deleteFolderRecursively(uri: Uri) {
+    val mediaStoreFile = getMediaStoreFiles(uri).firstOrNull() ?: throw FileNotFoundException()
+    val mediaStoreFiles = getFiles("${mediaStoreFile.relativePath}/${mediaStoreFile.displayName}")
+    mediaStoreFiles.forEach {
+        if (it.mimeType == MIME_TYPE_FOLDER) {
+            deleteFolderRecursively(it.uri)
+        }
+        delete(it.fullPath, it.uri)
+    }
+    delete(mediaStoreFile.fullPath, uri)
+}
+
+fun Context.getMediaStoreFiles(
+    collection: Uri,
+    selection: String? = null,
+    selectionArgs: Array<String>? = null
+): List<MediaStoreFile> {
     val files = mutableListOf<MediaStoreFile>()
 
-    val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
     val projection = arrayOf(
         MediaStore.Files.FileColumns._ID,
         MediaStore.Files.FileColumns.DISPLAY_NAME,
         MediaStore.Files.FileColumns.MIME_TYPE,
+        MediaStore.Files.FileColumns.RELATIVE_PATH,
+        MediaStore.Files.FileColumns.DATA,
         MediaStore.Files.FileColumns.SIZE
     )
-    val selection = "${MediaStore.Files.FileColumns.RELATIVE_PATH} = ?"
-    val selectionArgs = arrayOf("$DOCUMENTS_APP_FOLDER/$path/")
 
-    contentResolver.query(collection, projection, selection, selectionArgs, null)?.use { cursor ->
+    contentResolver.query(collection, projection, selection, selectionArgs, "${MediaStore.Files.FileColumns.DISPLAY_NAME} ASC")?.use { cursor ->
         val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
         val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DISPLAY_NAME)
         val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE)
+        val relativePathColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.RELATIVE_PATH)
+        val fullPathColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
         val sizeColumn = cursor.getColumnIndex(MediaStore.Files.FileColumns.SIZE)
 
         while (cursor.moveToNext()) {
             val id = cursor.getLong(idColumn)
             val displayName = cursor.getStringOrNull(displayNameColumn).orEmpty()
             val mimeType = cursor.getStringOrNull(mimeTypeColumn)
+            val relativePath = cursor.getString(relativePathColumn)
+            val fullPath = cursor.getString(fullPathColumn)
             val size = cursor.getLong(sizeColumn)
             val uri = ContentUris.withAppendedId(collection, id)
 
@@ -75,6 +108,8 @@ fun Context.getFiles(path: String): List<MediaStoreFile> {
                 displayName = displayName,
                 mimeType = mimeType,
                 uri = uri,
+                relativePath = relativePath.substring(DOCUMENTS_APP_FOLDER.length+1, relativePath.length-1),
+                fullPath = fullPath,
                 size = size
             )
             files.add(mediaStoreFile)
@@ -83,8 +118,10 @@ fun Context.getFiles(path: String): List<MediaStoreFile> {
     return files
 }
 
-fun Context.deleteFile(uri: Uri) {
-    contentResolver.delete(uri, null, null)
+private fun Context.delete(path: String, uri: Uri) {
+    val pathFile = Path(path)
+    pathFile.deleteIfExists()
+    deleteFile(uri)
 }
 
 fun Context.getMimeTypeFromUri(uri: Uri) = contentResolver.getType(uri)
@@ -98,5 +135,7 @@ data class MediaStoreFile(
     val displayName: String,
     val mimeType: String?,
     val uri: Uri,
+    val relativePath: String,
+    val fullPath: String,
     val size: Long
 )

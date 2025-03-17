@@ -60,7 +60,7 @@ fun PhotoRow(
         Row {
             Text(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                text = folder.visibleName,
+                text = folder.name,
                 style = AppTheme.typography.medium16,
                 color = AppTheme.colors.contentPrimary
             )

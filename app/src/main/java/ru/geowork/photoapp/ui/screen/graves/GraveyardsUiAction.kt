@@ -6,7 +6,6 @@ import ru.geowork.photoapp.ui.base.UiAction
 
 sealed class GraveyardsUiAction: UiAction {
     data class SetShowBackButton(val value: Boolean): GraveyardsUiAction()
-    data class SetShowOptionsButton(val value: Boolean): GraveyardsUiAction()
     data class SetIsEditMode(val value: Boolean): GraveyardsUiAction()
     data object OnBack: GraveyardsUiAction()
 
@@ -18,11 +17,19 @@ sealed class GraveyardsUiAction: UiAction {
     data class OnFolderItemClick(val item: FolderItem): GraveyardsUiAction()
     data class OnChildItemClick(val parent: FolderItem.Folder, val child: FolderItem): GraveyardsUiAction()
 
-    data object OnAddFolderClick: GraveyardsUiAction()
+    data class OnAddFolderClick(val prefix: String, val postfix: String): GraveyardsUiAction()
     data object OnAddTextFileClick: GraveyardsUiAction()
     data class OnItemNameInput(val name: String): GraveyardsUiAction()
     data object OnDismissItemDialog: GraveyardsUiAction()
     data object OnItemNameConfirm: GraveyardsUiAction()
 
     data class OnTakePhotoClick(val folder: FolderItem.Folder): GraveyardsUiAction()
+
+    data object OnOptionsClick: GraveyardsUiAction()
+    data object OnOptionsDismiss: GraveyardsUiAction()
+
+    data object OnNavigateToUploadClick: GraveyardsUiAction()
+    data object OnDeleteRequestClick: GraveyardsUiAction()
+    data object OnDeleteDismissClick: GraveyardsUiAction()
+    data object OnDeleteConfirmedClick: GraveyardsUiAction()
 }

@@ -17,6 +17,13 @@ class AppTypography(
         lineHeight = 16.sp
     ),
 
+    val regular14: TextStyle = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    ),
+
     val regular16: TextStyle = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Normal,

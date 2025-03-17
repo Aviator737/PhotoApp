@@ -42,9 +42,11 @@ fun GravesWrapper(
     content: @Composable () -> Unit
 ) {
     Column(modifier = modifier
-        .then(if(isEditMode) Modifier.border(
-            border = BorderStroke(3.dp, AppTheme.colors.orange),
-        ) else Modifier)
+        .then(
+            if (isEditMode) Modifier.border(
+                border = BorderStroke(3.dp, AppTheme.colors.orange),
+            ) else Modifier
+        )
         .fillMaxSize()
     ) {
         Row(
@@ -60,8 +62,8 @@ fun GravesWrapper(
                     onClick = onBackClick
                 )
             }
-            Spacer(modifier = Modifier.weight(1f))
-            ModeSwitch(isEditMode = isEditMode, onModeSwitchClick = onModeSwitchClick)
+            //Spacer(modifier = Modifier.weight(1f))
+            //ModeSwitch(isEditMode = isEditMode, onModeSwitchClick = onModeSwitchClick)
             Spacer(modifier = Modifier.weight(1f))
             if (showOptionsButton) {
                 ClickZoneButton(
@@ -111,9 +113,11 @@ private fun ModeSwitch(
     ) {
         Box(modifier = Modifier
             .clip(RoundedCornerShape(20.dp, 4.dp, 4.dp, 20.dp))
-            .then(if (!isEditMode) Modifier.background(
-                color = AppTheme.colors.backgroundPrimary
-            ) else Modifier)
+            .then(
+                if (!isEditMode) Modifier.background(
+                    color = AppTheme.colors.backgroundPrimary
+                ) else Modifier
+            )
             .clickable { onModeSwitchClick(false) }
             .fillMaxHeight()
             .padding(horizontal = 8.dp, vertical = 2.dp),
@@ -128,9 +132,11 @@ private fun ModeSwitch(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(4.dp, 20.dp, 20.dp, 4.dp))
-                .then(if (isEditMode) Modifier.background(
-                    color = AppTheme.colors.orange
-                ) else Modifier)
+                .then(
+                    if (isEditMode) Modifier.background(
+                        color = AppTheme.colors.orange
+                    ) else Modifier
+                )
                 .clickable { onModeSwitchClick(true) }
                 .fillMaxHeight()
                 .padding(horizontal = 8.dp, vertical = 2.dp),

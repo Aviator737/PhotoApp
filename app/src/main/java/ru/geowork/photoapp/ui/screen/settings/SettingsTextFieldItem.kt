@@ -1,7 +1,9 @@
 package ru.geowork.photoapp.ui.screen.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,7 +25,9 @@ import ru.geowork.photoapp.ui.theme.AppTheme
 @Composable
 fun SettingsTextFieldItem(
     text: String,
+    descriptionText: String? = null,
     icon: Painter? = null,
+    enabled: Boolean = true,
     hint: String,
     value: String,
     keyboardType: KeyboardType = KeyboardType.Unspecified,
@@ -38,10 +42,12 @@ fun SettingsTextFieldItem(
                 bottom = 14.dp
             )
             .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             icon?.let {
                 Icon(
                     modifier = Modifier
@@ -52,16 +58,27 @@ fun SettingsTextFieldItem(
                     tint = AppTheme.colors.contentPrimary
                 )
             }
-            Text(
-                text = text,
-                color = AppTheme.colors.contentPrimary,
-                style = AppTheme.typography.medium16
-            )
+            Column {
+                Text(
+                    text = text,
+                    color = AppTheme.colors.contentPrimary,
+                    style = AppTheme.typography.medium16
+                )
+                descriptionText?.let {
+                    Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        text = it,
+                        color = AppTheme.colors.contentSecondary,
+                        style = AppTheme.typography.regular14
+                    )
+                }
+            }
         }
         Input(
-            modifier = Modifier.width(80.dp),
+            modifier = Modifier.padding(start = 16.dp).width(80.dp),
             hint = hint,
             text = value,
+            enabled = enabled,
             keyboardType = keyboardType,
             onInput = onInput
         )

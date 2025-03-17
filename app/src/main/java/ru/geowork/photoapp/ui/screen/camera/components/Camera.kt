@@ -2,9 +2,11 @@ package ru.geowork.photoapp.ui.screen.camera.components
 
 import android.Manifest
 import android.content.Context
+import android.net.Uri
 import android.util.Rational
 import android.util.Size
 import android.view.HapticFeedbackConstants
+import android.view.OrientationEventListener
 import android.view.Surface
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
@@ -24,6 +26,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -32,6 +35,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -43,13 +47,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -78,7 +83,6 @@ import ru.geowork.photoapp.R
 import ru.geowork.photoapp.ui.components.WithPermissions
 import ru.geowork.photoapp.ui.screen.camera.CameraUiAction
 import ru.geowork.photoapp.ui.screen.camera.CameraUiState
-import ru.geowork.photoapp.ui.screen.graves.GraveyardsUiAction
 import ru.geowork.photoapp.ui.theme.AppTheme
 import ru.geowork.photoapp.ui.theme.BackgroundSecondaryDark
 import ru.geowork.photoapp.util.HideSystemBars
@@ -104,27 +108,52 @@ fun Camera(
     var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
+    var shutterDim by remember { mutableStateOf(false) }
 
     state.zoomLevels.firstOrNull { it.second }?.let { cameraControl?.setZoomRatio(it.first) }
     state.exposureState.selectedStep?.let { cameraControl?.setExposureCompensationIndex(it.index) }
 
     val itemsScrollState = rememberLazyListState()
 
-    HideSystemBars()
+    BoxWithConstraints {
+        if (constraints.maxHeight < 2000) HideSystemBars()
+    }
+
+    DisposableEffect(Unit) {
+        val orientationEventListener = object : OrientationEventListener(context) {
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation == ORIENTATION_UNKNOWN) return
+                imageCapture?.targetRotation = when (orientation) {
+                    in 45 until 135 -> Surface.ROTATION_270
+                    in 135 until 225 -> Surface.ROTATION_180
+                    in 225 until 315 -> Surface.ROTATION_90
+                    else -> Surface.ROTATION_0
+                }
+            }
+        }
+        orientationEventListener.enable()
+        onDispose {
+            orientationEventListener.disable()
+        }
+    }
 
     LifecycleResumeEffect(Unit) {
         onUiAction(CameraUiAction.OnUpdateFolderItems)
         onPauseOrDispose {}
     }
 
-    LaunchedEffect(state.outputStream) {
-        if (state.outputStream != null) {
+    LaunchedEffect(state.takePhoto) {
+        if (state.takePhoto != null) {
+            shutterDim = true
             context.takePhoto(
-                outputStream = state.outputStream,
+                uri = state.takePhoto.uri,
+                outputStream = state.takePhoto.outputStream,
                 imageCapture = imageCapture,
                 onError = { println(it) },
-                onImageSaved = { onUiAction(CameraUiAction.OnPhotoTaken) }
+                onImageSaved = { onUiAction(CameraUiAction.OnPhotoTaken(it)) }
             )
+            delay(400)
+            shutterDim = false
         }
     }
 
@@ -134,85 +163,82 @@ fun Camera(
         }
     }
 
-    if (state.imageQuality != null) {
-        LaunchedEffect(Unit) {
-            cameraScope.launch {
-                val cameraProvider = ProcessCameraProvider.awaitInstance(context)
+    LaunchedEffect(Unit) {
+        cameraScope.launch {
+            val cameraProvider = ProcessCameraProvider.awaitInstance(context)
 
-                val resolutionSelector = ResolutionSelector.Builder()
-                    .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
-                    .setResolutionStrategy(
-                        ResolutionStrategy(
-                            Size(4000, 3000),
-                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
-                        )
+            val resolutionSelector = ResolutionSelector.Builder()
+                .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
+                .setResolutionStrategy(
+                    ResolutionStrategy(
+                        Size(4000, 3000),
+                        ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
                     )
-                    .build()
+                )
+                .build()
 
-                val previewUseCase = Preview.Builder()
-                    .setResolutionSelector(resolutionSelector)
-                    .build()
-                    .apply {
-                        setSurfaceProvider { request ->
-                            surfaceRequest = request
-                            surfaceMeteringPointFactory = SurfaceOrientedMeteringPointFactory(
-                                request.resolution.width.toFloat(),
-                                request.resolution.height.toFloat()
-                            )
-                        }
+            val previewUseCase = Preview.Builder()
+                .setResolutionSelector(resolutionSelector)
+                .build()
+                .apply {
+                    setSurfaceProvider { request ->
+                        surfaceRequest = request
+                        surfaceMeteringPointFactory = SurfaceOrientedMeteringPointFactory(
+                            request.resolution.width.toFloat(),
+                            request.resolution.height.toFloat()
+                        )
                     }
+                }
 
-                val imageCaptureUseCase = ImageCapture.Builder()
-                    .setResolutionSelector(resolutionSelector)
-                    .setJpegQuality(state.imageQuality)
-                    .build()
+            val imageCaptureUseCase = ImageCapture.Builder()
+                .setResolutionSelector(resolutionSelector)
+                .build()
 
-                val useCaseGroup = UseCaseGroup.Builder()
-                    .addUseCase(previewUseCase)
-                    .addUseCase(imageCaptureUseCase)
-                    .setViewPort(ViewPort.Builder(Rational(3, 4), Surface.ROTATION_0).build())
-                    .build()
+            val useCaseGroup = UseCaseGroup.Builder()
+                .addUseCase(previewUseCase)
+                .addUseCase(imageCaptureUseCase)
+                .setViewPort(ViewPort.Builder(Rational(3, 4), Surface.ROTATION_0).build())
+                .build()
 
-                val camera = cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    useCaseGroup
+            val camera = cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                useCaseGroup
+            )
+
+            imageCapture = imageCaptureUseCase
+            cameraControl = camera.cameraControl
+
+            onUiAction(
+                CameraUiAction.OnZoomLevelsResolved(
+                    minZoom = camera.cameraInfo.zoomState.value?.minZoomRatio ?: 1f,
+                    maxZoom = camera.cameraInfo.zoomState.value?.maxZoomRatio ?: 1f
                 )
+            )
 
-                imageCapture = imageCaptureUseCase
-                cameraControl = camera.cameraControl
-
+            with(camera.cameraInfo.exposureState) {
                 onUiAction(
-                    CameraUiAction.OnZoomLevelsResolved(
-                        minZoom = camera.cameraInfo.zoomState.value?.minZoomRatio ?: 1f,
-                        maxZoom = camera.cameraInfo.zoomState.value?.maxZoomRatio ?: 1f
+                    CameraUiAction.OnExposureResolved(
+                        isSupported = isExposureCompensationSupported,
+                        default = exposureCompensationIndex,
+                        step = exposureCompensationStep.toFloat(),
+                        min = exposureCompensationRange.lower,
+                        max = exposureCompensationRange.upper,
                     )
                 )
+            }
 
-                with(camera.cameraInfo.exposureState) {
-                    onUiAction(
-                        CameraUiAction.OnExposureResolved(
-                            isSupported = isExposureCompensationSupported,
-                            default = exposureCompensationIndex,
-                            step = exposureCompensationStep.toFloat(),
-                            min = exposureCompensationRange.lower,
-                            max = exposureCompensationRange.upper,
-                        )
-                    )
-                }
-
-                try {
-                    awaitCancellation()
-                } finally {
-                    cameraProvider.unbindAll()
-                    cameraControl = null
-                }
+            try {
+                awaitCancellation()
+            } finally {
+                cameraProvider.unbindAll()
+                cameraControl = null
             }
         }
     }
 
     Column(modifier = Modifier
-        .fillMaxWidth()
+        .fillMaxSize()
         .background(BackgroundSecondaryDark)
     ) {
         if (state.isInitialized) {
@@ -250,6 +276,13 @@ fun Camera(
                             surfaceRequest = surfaceRequest,
                             implementationMode = ImplementationMode.EXTERNAL
                         )
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = shutterDim,
+                            enter = fadeIn(tween(200)),
+                            exit = fadeOut(tween(200))
+                        ) {
+                            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)))
+                        }
                         if (state.showGrid) {
                             CameraGridOverlay(Modifier.fillMaxSize())
                         }
@@ -360,8 +393,8 @@ fun Camera(
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(12.dp))
                         .clickable { onUiAction(CameraUiAction.OnPhotoClick(index)) }
                 )
             }
@@ -378,10 +411,11 @@ fun PreviewCamera() {
 }
 
 private fun Context.takePhoto(
+    uri: Uri,
     outputStream: OutputStream,
     imageCapture: ImageCapture?,
     onError: (ImageCaptureException) -> Unit,
-    onImageSaved: () -> Unit
+    onImageSaved: (Uri) -> Unit
 ) {
     val outputFileOptions = ImageCapture.OutputFileOptions.Builder(outputStream).build()
     imageCapture?.takePicture(outputFileOptions, mainExecutor,
@@ -392,7 +426,7 @@ private fun Context.takePhoto(
             }
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                 outputStream.close()
-                onImageSaved()
+                onImageSaved(uri)
             }
         }
     )

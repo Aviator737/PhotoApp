@@ -85,7 +85,7 @@ fun Gallery(
         AppDialog(
             dismissButtonText = stringResource(R.string.cancel),
             confirmButtonText = stringResource(R.string.delete),
-            title = stringResource(R.string.gallery_confirm_delete_title),
+            title = stringResource(R.string.confirm_delete_title),
             confirmButtonColors = ButtonDefaults.buttonColors(
                 backgroundColor = AppTheme.colors.systemErrorPrimary,
                 contentColor = AppTheme.colors.contentConstant
@@ -95,7 +95,7 @@ fun Gallery(
         ) {
             Text(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                text = stringResource(R.string.gallery_confirm_delete_text, state.items[state.currentItem].name),
+                text = stringResource(R.string.confirm_delete_text, state.items[state.currentItem].name),
                 color = AppTheme.colors.contentPrimary
             )
         }

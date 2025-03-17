@@ -47,7 +47,7 @@ fun FileManager(
             verticalAlignment = Alignment.CenterVertically
         ) {
             itemsIndexed(parentFolders) { i, parentFolder ->
-                Chip(parentFolder.visibleName) { onParentFolderClick(parentFolder) }
+                Chip(parentFolder.name) { onParentFolderClick(parentFolder) }
                 if (i+1 < parentFolders.size) {
                     Icon(
                         modifier = Modifier.padding(horizontal = 4.dp).size(24.dp),
@@ -72,7 +72,7 @@ fun FileManager(
                     )
                     else -> ListItemWithIcon(
                         modifier = Modifier.padding(horizontal = 24.dp),
-                        name = if (item is FolderItem.Folder) item.visibleName else item.name,
+                        name = item.name,
                         icon = when (item) {
                             is FolderItem.Folder -> painterResource(R.drawable.folder)
                             is FolderItem.ImageFile -> painterResource(R.drawable.ic_attachment)

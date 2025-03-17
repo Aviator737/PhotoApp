@@ -1,5 +1,6 @@
 package ru.geowork.photoapp.ui.screen.camera
 
+import android.net.Uri
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +34,9 @@ class CameraViewModel @AssistedInject constructor(
         initSettings()
     }
 
-    override fun handleCoroutineException(e: Throwable) {}
+    override fun handleCoroutineException(e: Throwable) {
+        println(e)
+    }
 
     override fun onUiAction(uiAction: CameraUiAction) {
         when (uiAction) {
@@ -60,7 +63,7 @@ class CameraViewModel @AssistedInject constructor(
             CameraUiAction.SwitchGrid -> handleSwitchGrid()
 
             CameraUiAction.OnTakePhotoClick -> handleOnTakePhotoClick()
-            is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken()
+            is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken(uiAction.uri)
 
             is CameraUiAction.OnPhotoClick -> handleOnPhotoClick(uiAction.position)
 
@@ -144,18 +147,21 @@ class CameraViewModel @AssistedInject constructor(
 
     private fun handleOnTakePhotoClick() = viewModelScopeErrorHandled.launch {
         val photosCount = uiState.value.items.size
-        val name = payload.savePath.replace('/', '_') + "_$photosCount"
-        val imageItem = FolderItem.ImageFile(name = name)
+        val name = "${payload.name}_$photosCount"
+        val imageItem = FolderItem.ImageFile(name = name, parentFolder = payload.savePath)
         filesRepository.createFolderItem(imageItem, payload.savePath)?.let { uri ->
             filesRepository.openOutputStream(uri)?.let { stream ->
-                updateUiState { it.copy(outputStream = stream) }
+                updateUiState { it.copy(takePhoto = CameraUiState.TakePhotoState(uri, stream)) }
             }
         }
     }
 
-    private fun handleOnPhotoTaken() = viewModelScopeErrorHandled.launch {
-        updateUiState { it.copy(outputStream = null) }
+    private fun handleOnPhotoTaken(uri: Uri?) = viewModelScopeErrorHandled.launch {
+        updateUiState { it.copy(takePhoto = null) }
         getFolderItems()
+        if (uri == null) return@launch
+        val isCompressed = filesRepository.compressImage(uri)
+        if (isCompressed) getFolderItems()
     }
 
     private fun handleOnPhotoClick(position: Int) {
@@ -167,13 +173,11 @@ class CameraViewModel @AssistedInject constructor(
     }
 
     private fun initSettings() = viewModelScopeErrorHandled.launch {
-        val imageQuality = dataStoreRepository.getImageQuality()
         val showGrid = dataStoreRepository.getCameraShowGrid() ?: false
         isSettingsInitialized = true
         updateUiState {
             it.copy(
                 isInitialized = isInitialized,
-                imageQuality = imageQuality,
                 showGrid = showGrid
             )
         }
