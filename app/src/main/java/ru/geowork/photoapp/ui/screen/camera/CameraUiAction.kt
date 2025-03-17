@@ -1,6 +1,6 @@
 package ru.geowork.photoapp.ui.screen.camera
 
-import android.net.Uri
+import androidx.camera.core.ImageProxy
 import ru.geowork.photoapp.ui.base.UiAction
 
 sealed class CameraUiAction: UiAction {
@@ -22,8 +22,9 @@ sealed class CameraUiAction: UiAction {
     data object SwitchGrid: CameraUiAction()
     data object SwitchExposureMenu: CameraUiAction()
 
-    data object OnTakePhotoClick: CameraUiAction()
-    data class OnPhotoTaken(val uri: Uri?): CameraUiAction()
+    data object OnCaptureStarted: CameraUiAction()
+    data class OnCaptureSuccess(val image: ImageProxy): CameraUiAction()
+    data object OnCaptureError: CameraUiAction()
 
     data class OnPhotoClick(val position: Int): CameraUiAction()
 

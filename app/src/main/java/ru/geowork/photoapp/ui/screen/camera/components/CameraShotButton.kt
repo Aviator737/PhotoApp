@@ -19,6 +19,7 @@ import ru.geowork.photoapp.ui.theme.ContentSubPrimaryDark
 
 @Composable
 fun CameraShotButton(
+    isEnabled: Boolean,
     onClick: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
@@ -28,7 +29,7 @@ fun CameraShotButton(
             .background(AppTheme.colors.contentConstant, CircleShape)
             .size(70.dp)
             .clip(CircleShape)
-            .clickable {
+            .clickable(enabled = isEnabled) {
                 haptic.performHapticFeedback(HapticFeedbackType(HapticFeedbackConstants.LONG_PRESS))
                 onClick()
             },
@@ -47,6 +48,6 @@ fun CameraShotButton(
 @Composable
 fun PreviewCameraShotButton() {
     AppTheme {
-        CameraShotButton {}
+        CameraShotButton(true) {}
     }
 }

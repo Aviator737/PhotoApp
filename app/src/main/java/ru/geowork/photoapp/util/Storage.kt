@@ -86,7 +86,7 @@ fun Context.getMediaStoreFiles(
         MediaStore.Files.FileColumns.SIZE
     )
 
-    contentResolver.query(collection, projection, selection, selectionArgs, "${MediaStore.Files.FileColumns.DISPLAY_NAME} ASC")?.use { cursor ->
+    contentResolver.query(collection, projection, selection, selectionArgs, null)?.use { cursor ->
         val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
         val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DISPLAY_NAME)
         val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE)

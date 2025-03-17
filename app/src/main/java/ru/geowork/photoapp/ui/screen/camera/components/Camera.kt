@@ -2,7 +2,6 @@ package ru.geowork.photoapp.ui.screen.camera.components
 
 import android.Manifest
 import android.content.Context
-import android.net.Uri
 import android.util.Rational
 import android.util.Size
 import android.view.HapticFeedbackConstants
@@ -14,6 +13,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
@@ -87,7 +87,6 @@ import ru.geowork.photoapp.ui.theme.AppTheme
 import ru.geowork.photoapp.ui.theme.BackgroundSecondaryDark
 import ru.geowork.photoapp.util.HideSystemBars
 import ru.geowork.photoapp.util.noRippleClickable
-import java.io.OutputStream
 import java.util.Locale
 
 @Composable
@@ -108,7 +107,6 @@ fun Camera(
     var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
-    var shutterDim by remember { mutableStateOf(false) }
 
     state.zoomLevels.firstOrNull { it.second }?.let { cameraControl?.setZoomRatio(it.first) }
     state.exposureState.selectedStep?.let { cameraControl?.setExposureCompensationIndex(it.index) }
@@ -140,21 +138,6 @@ fun Camera(
     LifecycleResumeEffect(Unit) {
         onUiAction(CameraUiAction.OnUpdateFolderItems)
         onPauseOrDispose {}
-    }
-
-    LaunchedEffect(state.takePhoto) {
-        if (state.takePhoto != null) {
-            shutterDim = true
-            context.takePhoto(
-                uri = state.takePhoto.uri,
-                outputStream = state.takePhoto.outputStream,
-                imageCapture = imageCapture,
-                onError = { println(it) },
-                onImageSaved = { onUiAction(CameraUiAction.OnPhotoTaken(it)) }
-            )
-            delay(400)
-            shutterDim = false
-        }
     }
 
     LaunchedEffect(state.items.size) {
@@ -276,10 +259,13 @@ fun Camera(
                             surfaceRequest = surfaceRequest,
                             implementationMode = ImplementationMode.EXTERNAL
                         )
+                        if (state.isCapturingImage) {
+
+                        }
                         androidx.compose.animation.AnimatedVisibility(
-                            visible = shutterDim,
-                            enter = fadeIn(tween(200)),
-                            exit = fadeOut(tween(200))
+                            visible = state.isCapturingImage,
+                            enter = fadeIn(tween(100)),
+                            exit = fadeOut(tween(100))
                         ) {
                             Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)))
                         }
@@ -372,7 +358,17 @@ fun Camera(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CameraShotButton { onUiAction(CameraUiAction.OnTakePhotoClick) }
+                    CameraShotButton(isEnabled = !state.isCapturingImage) {
+                        context.takePhoto(
+                            imageCapture = imageCapture,
+                            onCaptureStarted = { onUiAction(CameraUiAction.OnCaptureStarted) },
+                            onCaptureSuccess = { onUiAction(CameraUiAction.OnCaptureSuccess(it)) },
+                            onError = {
+                                println(it)
+                                onUiAction(CameraUiAction.OnCaptureError)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -411,23 +407,28 @@ fun PreviewCamera() {
 }
 
 private fun Context.takePhoto(
-    uri: Uri,
-    outputStream: OutputStream,
     imageCapture: ImageCapture?,
-    onError: (ImageCaptureException) -> Unit,
-    onImageSaved: (Uri) -> Unit
+    onCaptureStarted: () -> Unit,
+    onCaptureSuccess: (ImageProxy) -> Unit,
+    onError: (ImageCaptureException) -> Unit
 ) {
-    val outputFileOptions = ImageCapture.OutputFileOptions.Builder(outputStream).build()
-    imageCapture?.takePicture(outputFileOptions, mainExecutor,
-        object : ImageCapture.OnImageSavedCallback {
-            override fun onError(error: ImageCaptureException) {
-                outputStream.close()
-                onError(error)
-            }
-            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                outputStream.close()
-                onImageSaved(uri)
-            }
+    var timeStart: Long = 0
+
+    imageCapture?.takePicture(mainExecutor, object: ImageCapture.OnImageCapturedCallback() {
+
+        override fun onCaptureStarted() {
+            super.onCaptureStarted()
+            timeStart = System.currentTimeMillis()
+            onCaptureStarted()
         }
-    )
+
+        override fun onCaptureSuccess(image: ImageProxy) {
+            println("Capture time: ${System.currentTimeMillis() - timeStart}")
+            onCaptureSuccess(image)
+        }
+
+        override fun onError(exception: ImageCaptureException) {
+            onError(exception)
+        }
+    })
 }

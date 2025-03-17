@@ -1,6 +1,6 @@
 package ru.geowork.photoapp.ui.screen.camera
 
-import android.net.Uri
+import androidx.camera.core.ImageProxy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +26,7 @@ class CameraViewModel @AssistedInject constructor(
     private val isInitialized
         get() = isSettingsInitialized && isZoomLevelsInitialized && isExposureInitialized
 
+    private var getFolderItemsJob: Job? = null
     private var saveExposureJob: Job? = null
 
     override val initialUiState: CameraUiState = CameraUiState()
@@ -62,8 +63,9 @@ class CameraViewModel @AssistedInject constructor(
             CameraUiAction.SwitchExposureMenu -> handleSwitchExposureMenu()
             CameraUiAction.SwitchGrid -> handleSwitchGrid()
 
-            CameraUiAction.OnTakePhotoClick -> handleOnTakePhotoClick()
-            is CameraUiAction.OnPhotoTaken -> handleOnPhotoTaken(uiAction.uri)
+            CameraUiAction.OnCaptureStarted -> handleOnCaptureStarted()
+            is CameraUiAction.OnCaptureSuccess -> handleOnCaptureSuccess(uiAction.image)
+            CameraUiAction.OnCaptureError -> handleOnCaptureError()
 
             is CameraUiAction.OnPhotoClick -> handleOnPhotoClick(uiAction.position)
 
@@ -145,24 +147,30 @@ class CameraViewModel @AssistedInject constructor(
         updateUiState { it.copy(showGrid = showGrid) }
     }
 
-    private fun handleOnTakePhotoClick() = viewModelScopeErrorHandled.launch {
-        val photosCount = uiState.value.items.size
-        val name = "${payload.name}_$photosCount"
+    private fun handleOnCaptureSuccess(image: ImageProxy) = viewModelScopeErrorHandled.launch {
+        updateUiState { it.copy(isCapturingImage = false) }
+
+        val buffer = image.planes[0].buffer
+        val bytes = ByteArray(buffer.remaining())
+        buffer.get(bytes)
+        image.close()
+
+        val number = uiState.value.items.size
+        val name = "${payload.name}_$number"
         val imageItem = FolderItem.ImageFile(name = name, parentFolder = payload.savePath)
-        filesRepository.createFolderItem(imageItem, payload.savePath)?.let { uri ->
-            filesRepository.openOutputStream(uri)?.let { stream ->
-                updateUiState { it.copy(takePhoto = CameraUiState.TakePhotoState(uri, stream)) }
-            }
+
+        val uri = filesRepository.createFolderItem(imageItem, payload.savePath)
+
+        uri?.let {
+            filesRepository.openOutputStream(uri)?.use { stream -> stream.write(bytes) }
+            getFolderItems()
+            val isCompressed = filesRepository.compressImage(uri)
+            if (isCompressed) getFolderItems()
         }
     }
 
-    private fun handleOnPhotoTaken(uri: Uri?) = viewModelScopeErrorHandled.launch {
-        updateUiState { it.copy(takePhoto = null) }
-        getFolderItems()
-        if (uri == null) return@launch
-        val isCompressed = filesRepository.compressImage(uri)
-        if (isCompressed) getFolderItems()
-    }
+    private fun handleOnCaptureStarted() = updateUiState { it.copy(isCapturingImage = true) }
+    private fun handleOnCaptureError() = updateUiState { it.copy(isCapturingImage = false) }
 
     private fun handleOnPhotoClick(position: Int) {
         sendUiEvent(CameraUiEvent.NavigateToGallery(GalleryPayload(position, payload.savePath)))
@@ -183,8 +191,11 @@ class CameraViewModel @AssistedInject constructor(
         }
     }
 
-    private fun getFolderItems() = viewModelScopeErrorHandled.launch {
-        val folderItems = filesRepository.getFolderItems(payload.savePath).filterIsInstance<FolderItem.ImageFile>()
-        updateUiState { it.copy(items = folderItems) }
+    private fun getFolderItems() {
+        getFolderItemsJob?.cancel()
+        getFolderItemsJob = viewModelScopeErrorHandled.launch {
+            val folderItems = filesRepository.getFolderItems(payload.savePath).filterIsInstance<FolderItem.ImageFile>()
+            updateUiState { it.copy(items = folderItems) }
+        }
     }
 }
