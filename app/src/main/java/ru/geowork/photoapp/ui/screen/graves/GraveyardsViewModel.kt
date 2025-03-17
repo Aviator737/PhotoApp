@@ -51,7 +51,8 @@ class GraveyardsViewModel @Inject constructor(
 
             is GraveyardsUiAction.OnAddFolderClick -> handleOnAddFolderClick(uiAction.prefix, uiAction.postfix)
             GraveyardsUiAction.OnAddTextFileClick -> handleOnAddTextFileClick()
-            is GraveyardsUiAction.OnItemNameInput -> handleOnItemNameInput(uiAction.name)
+            is GraveyardsUiAction.OnEditModeCheckboxClick -> handleOnEditModeCheckboxClick(uiAction.enabled, uiAction.editModePostfix)
+            is GraveyardsUiAction.OnItemNameInput -> handleOnItemNameInput(uiAction.name, uiAction.editModePostfix)
             GraveyardsUiAction.OnDismissItemDialog -> handleOnDismissItemDialog()
             GraveyardsUiAction.OnItemNameConfirm -> handleOnItemNameConfirm()
 
@@ -171,21 +172,64 @@ class GraveyardsViewModel @Inject constructor(
     }
 
     private fun handleOnAddFolderClick(prefix: String, postfix: String) {
-        updateUiState { it.copy(newItemDialog = GraveyardsUiState.NewFolderItemDialogState(
-            item = FolderItem.Folder(name = prefix+postfix), focusIndex = prefix.length
-        )) }
+        updateUiState {
+            it.copy(newItemDialog =
+                GraveyardsUiState.NewFolderItemDialogState(
+                    item = FolderItem.Folder(name = prefix+postfix),
+                    focusIndex = prefix.length,
+                    isEditMode = false,
+                    showEditModeCheckbox = true
+                )
+            )
+        }
     }
 
     private fun handleOnAddTextFileClick() {
-        updateUiState { it.copy(newItemDialog = GraveyardsUiState.NewFolderItemDialogState(
-            item = FolderItem.DocumentFile(name = "", type = FolderItem.DocumentFile.DocumentType.TXT), focusIndex = 0
-        )) }
+        updateUiState {
+            it.copy(newItemDialog =
+                GraveyardsUiState.NewFolderItemDialogState(
+                    item = FolderItem.DocumentFile(name = "", type = FolderItem.DocumentFile.DocumentType.TXT),
+                    focusIndex = 0,
+                    isEditMode = false,
+                    showEditModeCheckbox = false
+                )
+            )
+        }
     }
 
-    private fun handleOnItemNameInput(name: String) = updateUiState {
+    private fun handleOnEditModeCheckboxClick(enabled: Boolean, editModePostfix: String) = updateUiState {
         val dialogFolderItem = it.newItemDialog?.item
         it.copy(newItemDialog = when(dialogFolderItem) {
-            is FolderItem.Folder -> it.newItemDialog.copy(item = dialogFolderItem.copy(name = name), focusIndex = name.length)
+            is FolderItem.Folder -> {
+                val name = if (enabled && !dialogFolderItem.name.contains(editModePostfix)) {
+                    dialogFolderItem.name.plus(editModePostfix)
+                } else {
+                    dialogFolderItem.name.replace(editModePostfix, "")
+                }
+                it.newItemDialog.copy(
+                    item = dialogFolderItem.copy(name = name),
+                    focusIndex = name.length,
+                    isEditMode = enabled
+                )
+            }
+            else -> null
+        })
+    }
+
+    private fun handleOnItemNameInput(
+        name: String,
+        editModePostfix: String
+    ) = updateUiState {
+        val dialogFolderItem = it.newItemDialog?.item
+        it.copy(newItemDialog = when(dialogFolderItem) {
+            is FolderItem.Folder -> {
+                val isEditMode = name.contains(editModePostfix)
+                it.newItemDialog.copy(
+                    item = dialogFolderItem.copy(name = name),
+                    focusIndex = name.length,
+                    isEditMode = isEditMode
+                )
+            }
             is FolderItem.ImageFile -> it.newItemDialog.copy(item = dialogFolderItem.copy(name = name), focusIndex = name.length)
             is FolderItem.DocumentFile -> it.newItemDialog.copy(item = dialogFolderItem.copy(name = name), focusIndex = name.length)
             else -> null

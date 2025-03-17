@@ -18,7 +18,9 @@ data class GraveyardsUiState(
 ): UiState {
     data class NewFolderItemDialogState(
         val item: FolderItem,
-        val focusIndex: Int
+        val focusIndex: Int,
+        val isEditMode: Boolean,
+        val showEditModeCheckbox: Boolean
     )
 
     data class DeleteConfirmationDialogState(

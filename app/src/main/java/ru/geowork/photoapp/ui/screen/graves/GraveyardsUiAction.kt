@@ -19,7 +19,8 @@ sealed class GraveyardsUiAction: UiAction {
 
     data class OnAddFolderClick(val prefix: String, val postfix: String): GraveyardsUiAction()
     data object OnAddTextFileClick: GraveyardsUiAction()
-    data class OnItemNameInput(val name: String): GraveyardsUiAction()
+    data class OnEditModeCheckboxClick(val enabled: Boolean, val editModePostfix: String): GraveyardsUiAction()
+    data class OnItemNameInput(val name: String, val editModePostfix: String): GraveyardsUiAction()
     data object OnDismissItemDialog: GraveyardsUiAction()
     data object OnItemNameConfirm: GraveyardsUiAction()
 

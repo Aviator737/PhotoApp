@@ -36,7 +36,8 @@ fun Graveyards(
 
     val newBlockPrefix = stringResource(R.string.graves_add_block_prefix)
     val newRowPrefix = stringResource(R.string.graves_add_row_prefix)
-    val folderPostfix = if (state.isEditMode) stringResource(R.string.graves_edit_mode_postfix) else ""
+    val editModePostfix = stringResource(R.string.graves_edit_mode_postfix)
+    val folderPostfix = if (state.isEditMode) editModePostfix else ""
 
     val mapFileName = stringResource(R.string.graves_block_map_file_name)
     val pickFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { imageUri ->
@@ -176,10 +177,10 @@ fun Graveyards(
 
     state.newItemDialog?.let { item ->
         CreateFolderItemDialog(
-            item = item.item,
-            initialFocusIndex = item.focusIndex,
+            state = item,
             folderLevel = state.folderLevel,
-            onNameInput = { onUiAction(GraveyardsUiAction.OnItemNameInput(it)) },
+            onEditModeCheckBoxClick = { onUiAction(GraveyardsUiAction.OnEditModeCheckboxClick(it, editModePostfix)) },
+            onNameInput = { onUiAction(GraveyardsUiAction.OnItemNameInput(it, editModePostfix)) },
             onDismiss = { onUiAction(GraveyardsUiAction.OnDismissItemDialog) },
             onConfirm = { onUiAction(GraveyardsUiAction.OnItemNameConfirm) }
         )
