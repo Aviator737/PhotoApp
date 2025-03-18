@@ -148,7 +148,8 @@ fun Camera(
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(state.captureMode) {
+        if (state.captureMode == null) return@LaunchedEffect
         cameraScope.launch {
             val cameraProvider = ProcessCameraProvider.awaitInstance(context)
 
@@ -177,7 +178,8 @@ fun Camera(
 
             val imageCaptureUseCase = ImageCapture.Builder()
                 .setResolutionSelector(resolutionSelector)
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG)
+                .setOutputFormat(ImageCapture.OUTPUT_FORMAT_JPEG)
+                .setCaptureMode(state.captureMode)
                 .build()
 
             val useCaseGroup = UseCaseGroup.Builder()

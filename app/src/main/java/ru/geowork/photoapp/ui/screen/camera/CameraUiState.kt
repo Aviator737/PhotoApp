@@ -11,6 +11,8 @@ data class CameraUiState(
 
     val exposureState: ExposureState = ExposureState(),
 
+    val captureMode: Int? = null,
+
     val zoomLevels: List<Pair<Float, Boolean>> = listOf(),
     val showGrid: Boolean = false,
     val items: List<FolderItem.ImageFile> = listOf()

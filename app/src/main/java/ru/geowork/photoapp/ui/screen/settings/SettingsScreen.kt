@@ -7,6 +7,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.composable
+import ru.geowork.photoapp.ui.screen.settings.components.Settings
 
 const val SETTINGS_SCREEN_ID = "settings_screen"
 

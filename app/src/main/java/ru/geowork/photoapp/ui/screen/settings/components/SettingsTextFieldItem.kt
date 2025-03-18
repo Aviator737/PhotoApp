@@ -1,9 +1,7 @@
-package ru.geowork.photoapp.ui.screen.settings
+package ru.geowork.photoapp.ui.screen.settings.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,6 +22,7 @@ import ru.geowork.photoapp.ui.theme.AppTheme
 
 @Composable
 fun SettingsTextFieldItem(
+    modifier: Modifier = Modifier,
     text: String,
     descriptionText: String? = null,
     icon: Painter? = null,
@@ -34,14 +33,7 @@ fun SettingsTextFieldItem(
     onInput: (String) -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .padding(
-                start = 12.dp,
-                end = 12.dp,
-                top = 14.dp,
-                bottom = 14.dp
-            )
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(

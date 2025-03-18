@@ -1,4 +1,4 @@
-package ru.geowork.photoapp.ui.screen.settings
+package ru.geowork.photoapp.ui.screen.settings.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

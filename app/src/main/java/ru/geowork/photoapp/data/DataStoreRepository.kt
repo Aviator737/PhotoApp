@@ -1,5 +1,6 @@
 package ru.geowork.photoapp.data
 
+import androidx.camera.core.ImageCapture
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -39,6 +40,9 @@ class DataStoreRepository @Inject constructor(
     suspend fun getMaxImageSize(): Int = dataStore.data.map { it[MAX_IMAGE_SIZE] }.firstOrNull() ?: 4096
     suspend fun saveMaxImageSize(value: Int) { dataStore.edit { it[MAX_IMAGE_SIZE] = value } }
 
+    suspend fun getCaptureMode(): Int = dataStore.data.map { it[CAMERA_CAPTURE_MODE] }.firstOrNull() ?: ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
+    suspend fun saveCaptureMode(value: Int) { dataStore.edit { it[CAMERA_CAPTURE_MODE] = value } }
+
     companion object {
         private val PHOTOGRAPH_NAME = stringPreferencesKey("photograph_name")
         private val SUPERVISOR_NAME = stringPreferencesKey("supervisor_name")
@@ -48,6 +52,7 @@ class DataStoreRepository @Inject constructor(
         private val CAMERA_SHOW_GRID = booleanPreferencesKey("camera_show_grid")
         private val CAMERA_EXPOSURE_COMPENSATION_INDEX = intPreferencesKey("camera_exposure_compensation_index")
         private val CAMERA_ZOOM = floatPreferencesKey("camera_zoom")
+        private val CAMERA_CAPTURE_MODE = intPreferencesKey("camera_capture_mode")
 
         private val MAX_IMAGE_SIZE = intPreferencesKey("image_size")
     }

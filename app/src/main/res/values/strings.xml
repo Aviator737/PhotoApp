@@ -57,6 +57,14 @@
     <string name="settings_image_max_size_title">Максимальный размер фото</string>
     <string name="settings_image_max_size_description">Большие фотографии будут сжаты до указанного лимита</string>
     <string name="settings_image_max_size_hint">Кб</string>
+    <string name="settings_capture_mode_title">Режим съемки</string>
+    <string name="settings_select_capture_mode">Выберите режим</string>
+    <string name="settings_select_capture_quality">Качество</string>
+    <string name="settings_select_capture_quality_hint">Медленнее, но качество лучше</string>
+    <string name="settings_select_capture_min_latency">Скорость</string>
+    <string name="settings_select_capture_min_latency_hint">Быстрее, но качество хуже</string>
+    <string name="settings_select_capture_zero_lag">Минимальная задержка</string>
+    <string name="settings_select_capture_zero_lag_hint">Cамый быстрый, обычное качество. Могут быть проблемы на некоторых устройствах</string>
 
     <string name="poles_unavailable">Режим \"опоры\" недоступен</string>
 </resources>

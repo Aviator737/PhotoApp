@@ -32,6 +32,7 @@ class CameraViewModel @AssistedInject constructor(
     override val initialUiState: CameraUiState = CameraUiState()
 
     init {
+        initCaptureMode()
         initSettings()
     }
 
@@ -178,6 +179,11 @@ class CameraViewModel @AssistedInject constructor(
 
     private fun handleNavigateBack() {
         sendUiEvent(CameraUiEvent.NavigateBack)
+    }
+
+    private fun initCaptureMode() = viewModelScopeErrorHandled.launch {
+        val captureMode = dataStoreRepository.getCaptureMode()
+        updateUiState { it.copy(captureMode = captureMode) }
     }
 
     private fun initSettings() = viewModelScopeErrorHandled.launch {
