@@ -46,6 +46,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -115,8 +117,13 @@ fun Camera(
 
     val itemsScrollState = rememberLazyListState()
 
+    var systemBarVisible by remember { mutableStateOf<Boolean>(true) }
+
     BoxWithConstraints {
-        if (constraints.maxHeight < 2000) HideSystemBars()
+        if (constraints.maxHeight < 2000) {
+            systemBarVisible = false
+            HideSystemBars()
+        }
     }
 
     DisposableEffect(Unit) {
@@ -228,6 +235,7 @@ fun Camera(
     Column(modifier = Modifier
         .fillMaxSize()
         .background(BackgroundSecondaryDark)
+        .then(if (systemBarVisible) Modifier.safeDrawingPadding() else Modifier)
     ) {
         if (state.isInitialized) {
             WithPermissions(
