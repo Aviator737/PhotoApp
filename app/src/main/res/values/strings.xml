@@ -64,7 +64,7 @@
     <string name="settings_select_capture_min_latency">Скорость</string>
     <string name="settings_select_capture_min_latency_hint">Быстрее, но качество хуже</string>
     <string name="settings_select_capture_zero_lag">Минимальная задержка</string>
-    <string name="settings_select_capture_zero_lag_hint">Cамый быстрый, обычное качество. Могут быть проблемы на некоторых устройствах</string>
+    <string name="settings_select_capture_zero_lag_hint">Cамый быстрый, высокое качество. Могут быть проблемы на некоторых устройствах</string>
 
     <string name="poles_unavailable">Режим \"опоры\" недоступен</string>
 </resources>
