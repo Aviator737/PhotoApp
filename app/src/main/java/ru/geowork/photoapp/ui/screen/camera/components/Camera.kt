@@ -7,9 +7,11 @@ import android.util.Size
 import android.view.HapticFeedbackConstants
 import android.view.OrientationEventListener
 import android.view.Surface
+import androidx.annotation.OptIn
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -26,7 +28,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -89,6 +90,7 @@ import ru.geowork.photoapp.util.HideSystemBars
 import ru.geowork.photoapp.util.noRippleClickable
 import java.util.Locale
 
+@OptIn(ExperimentalZeroShutterLag::class)
 @Composable
 fun Camera(
     state: CameraUiState,
@@ -175,6 +177,7 @@ fun Camera(
 
             val imageCaptureUseCase = ImageCapture.Builder()
                 .setResolutionSelector(resolutionSelector)
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG)
                 .build()
 
             val useCaseGroup = UseCaseGroup.Builder()
@@ -260,13 +263,6 @@ fun Camera(
                             implementationMode = ImplementationMode.EXTERNAL
                         )
                         if (state.isCapturingImage) {
-
-                        }
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = state.isCapturingImage,
-                            enter = fadeIn(tween(100)),
-                            exit = fadeOut(tween(100))
-                        ) {
                             Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)))
                         }
                         if (state.showGrid) {
@@ -412,18 +408,14 @@ private fun Context.takePhoto(
     onCaptureSuccess: (ImageProxy) -> Unit,
     onError: (ImageCaptureException) -> Unit
 ) {
-    var timeStart: Long = 0
-
     imageCapture?.takePicture(mainExecutor, object: ImageCapture.OnImageCapturedCallback() {
 
         override fun onCaptureStarted() {
             super.onCaptureStarted()
-            timeStart = System.currentTimeMillis()
             onCaptureStarted()
         }
 
         override fun onCaptureSuccess(image: ImageProxy) {
-            println("Capture time: ${System.currentTimeMillis() - timeStart}")
             onCaptureSuccess(image)
         }
 
