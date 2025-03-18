@@ -78,7 +78,8 @@ fun CreateFolderItemDialog(
             Text(
                 modifier = Modifier.padding(start = 4.dp),
                 text = stringResource(R.string.graves_edit_mode_postfix),
-                style = AppTheme.typography.regular16
+                style = AppTheme.typography.regular16,
+                color = AppTheme.colors.contentPrimary
             )
         }
     }
