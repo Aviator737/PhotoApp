@@ -11,7 +11,8 @@ sealed class FolderItem {
         override val id: String = "",
         override val name: String = "",
         override val uri: Uri? = null,
-        val type: DocumentType = DocumentType.UNKNOWN
+        val type: DocumentType = DocumentType.UNKNOWN,
+        val text: String? = null
     ): FolderItem() {
         enum class DocumentType(val extension: String) {
             TXT("txt"), PDF("pdf"), UNKNOWN("txt");
@@ -44,6 +45,7 @@ sealed class FolderItem {
         override val name: String = "",
         override val uri: Uri? = null,
         val relativePath: String = "", //path without /app_folder_name/account_folder/
+        val level: Int = -1,
         val childItems: List<FolderItem>? = null
     ): FolderItem()
 }

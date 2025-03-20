@@ -124,7 +124,7 @@ private fun ModeSwitch(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = stringResource(R.string.graves_normal_mode),
+                text = stringResource(R.string.normal_mode),
                 style = AppTheme.typography.semibold16,
                 color = AppTheme.colors.contentPrimary
             )
@@ -143,7 +143,7 @@ private fun ModeSwitch(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = stringResource(R.string.graves_edit_mode),
+                text = stringResource(R.string.edit_mode),
                 style = AppTheme.typography.semibold16,
                 color = if (isEditMode) {
                     ContentPrimaryLight

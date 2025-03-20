@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import androidx.core.database.getStringOrNull
 import ru.geowork.photoapp.BuildConfig
+import java.io.File
 import java.io.FileNotFoundException
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
@@ -18,7 +19,9 @@ private const val MIME_TYPE_IMAGE_JPEG = "image/jpeg"
 private const val MIME_TYPE_IMAGE_PNG = "image/png"
 private const val MIME_TYPE_IMAGE_WEBP = "image/webp"
 
-private val DOCUMENTS_APP_FOLDER = "${Environment.DIRECTORY_DOCUMENTS}/${BuildConfig.APP_FOLDER_NAME}"
+val SEPARATOR: String = File.separator
+
+private val DOCUMENTS_APP_FOLDER = "${Environment.DIRECTORY_DOCUMENTS}$SEPARATOR${BuildConfig.APP_FOLDER_NAME}"
 
 fun Context.createFileLikeExt(fileName: String, path: String, ext: String): Uri? {
     val mimeType = getMimeTypeFromExtension(ext) ?: MIME_TYPE_FOLDER
@@ -34,7 +37,7 @@ fun Context.createFile(fileName: String, path: String, mimeType: String): Uri? {
     val contentValues = ContentValues().apply {
         put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
         put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-        put(MediaStore.MediaColumns.RELATIVE_PATH, "$DOCUMENTS_APP_FOLDER/$path/")
+        put(MediaStore.MediaColumns.RELATIVE_PATH, "$DOCUMENTS_APP_FOLDER$SEPARATOR$path$SEPARATOR")
     }
     val uri = when(mimeType) {
         MIME_TYPE_IMAGE_JPEG, MIME_TYPE_IMAGE_PNG, MIME_TYPE_IMAGE_WEBP -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -43,14 +46,14 @@ fun Context.createFile(fileName: String, path: String, mimeType: String): Uri? {
     return contentResolver.insert(uri, contentValues)
 }
 
-fun Context.openOutputStream(uri: Uri) = contentResolver.openOutputStream(uri)
+fun Context.openOutputStream(uri: Uri, mode: String) = contentResolver.openOutputStream(uri, mode)
 
 fun Context.openInputStream(uri: Uri) = contentResolver.openInputStream(uri)
 
 fun Context.getFiles(path: String): List<MediaStoreFile> {
     val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
     val selection = "${MediaStore.Files.FileColumns.RELATIVE_PATH} = ?"
-    val selectionArgs = arrayOf("$DOCUMENTS_APP_FOLDER/$path/")
+    val selectionArgs = arrayOf("$DOCUMENTS_APP_FOLDER$SEPARATOR$path$SEPARATOR")
     return getMediaStoreFiles(collection, selection, selectionArgs)
 }
 
@@ -60,7 +63,7 @@ fun Context.deleteFile(uri: Uri) {
 
 fun Context.deleteFolderRecursively(uri: Uri) {
     val mediaStoreFile = getMediaStoreFiles(uri).firstOrNull() ?: throw FileNotFoundException()
-    val mediaStoreFiles = getFiles("${mediaStoreFile.relativePath}/${mediaStoreFile.displayName}")
+    val mediaStoreFiles = getFiles("${mediaStoreFile.relativePath}$SEPARATOR${mediaStoreFile.displayName}")
     mediaStoreFiles.forEach {
         if (it.mimeType == MIME_TYPE_FOLDER) {
             deleteFolderRecursively(it.uri)

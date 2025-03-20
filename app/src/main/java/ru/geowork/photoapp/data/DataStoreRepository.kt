@@ -37,7 +37,7 @@ class DataStoreRepository @Inject constructor(
     suspend fun saveCameraExposure(value: Int) { dataStore.edit { it[CAMERA_EXPOSURE_COMPENSATION_INDEX] = value } }
     suspend fun saveCameraZoom(value: Float) { dataStore.edit { it[CAMERA_ZOOM] = value } }
 
-    suspend fun getMaxImageSize(): Int = dataStore.data.map { it[MAX_IMAGE_SIZE] }.firstOrNull() ?: 4096
+    suspend fun getMaxImageSize(): Int = dataStore.data.map { it[MAX_IMAGE_SIZE] }.firstOrNull() ?: 3900
     suspend fun saveMaxImageSize(value: Int) { dataStore.edit { it[MAX_IMAGE_SIZE] = value } }
 
     suspend fun getCaptureMode(): Int = dataStore.data.map { it[CAMERA_CAPTURE_MODE] }.firstOrNull() ?: ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY

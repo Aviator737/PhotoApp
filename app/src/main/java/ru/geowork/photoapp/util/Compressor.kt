@@ -24,7 +24,7 @@ fun Context.compressImage(uri: Uri, maxSize: Long): Boolean {
         deleteFile(uri)
         val newUri = createFile(mediaStoreFile.displayName, mediaStoreFile.relativePath, mediaStoreFile.mimeType ?: "") ?: throw IOException()
         tempFile.inputStream().use { inputStream ->
-            openOutputStream(newUri)?.use { outputStream ->
+            openOutputStream(newUri, "wt")?.use { outputStream ->
                 inputStream.copyTo(outputStream)
             }
         }

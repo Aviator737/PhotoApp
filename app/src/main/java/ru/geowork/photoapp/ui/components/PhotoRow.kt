@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import ru.geowork.photoapp.R
@@ -36,7 +38,8 @@ fun PhotoRow(
     modifier: Modifier = Modifier,
     folder: FolderItem.Folder,
     onTakePhotoClick: () -> Unit,
-    onPhotoClick: (FolderItem.ImageFile) -> Unit
+    onPhotoClick: (image: FolderItem.ImageFile) -> Unit,
+    onDocumentClick: (document: FolderItem.DocumentFile?) -> Unit
 ) {
     val items = folder.childItems ?: return
 
@@ -100,6 +103,20 @@ fun PhotoRow(
                         tint = AppTheme.colors.contentPrimary
                     )
                 }
+            }
+        }
+        Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+            val note = items.filterIsInstance<FolderItem.DocumentFile>().firstOrNull()
+            Chip(
+                text = if (note?.text.isNullOrEmpty()) {
+                    stringResource(R.string.row_add_note)
+                } else {
+                    val intValue = note?.text?.toIntOrNull() ?: 10
+                    note?.text?.plus(" ")?.plus(pluralStringResource(R.plurals.sites_postfix, intValue))
+                        ?: stringResource(R.string.row_add_note)
+                }
+            ) {
+                onDocumentClick(note)
             }
         }
     }

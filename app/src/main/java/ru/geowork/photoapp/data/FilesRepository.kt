@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 import ru.geowork.photoapp.di.DispatcherDefault
 import ru.geowork.photoapp.di.DispatcherIo
 import ru.geowork.photoapp.model.FolderItem
+import ru.geowork.photoapp.util.SEPARATOR
 import ru.geowork.photoapp.util.compressImage
 import ru.geowork.photoapp.util.createFileLikeExt
 import ru.geowork.photoapp.util.createFileLikeUri
@@ -17,6 +18,7 @@ import ru.geowork.photoapp.util.getExtensionFromMimeType
 import ru.geowork.photoapp.util.getFiles
 import ru.geowork.photoapp.util.openInputStream
 import ru.geowork.photoapp.util.openOutputStream
+import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -51,7 +53,8 @@ class FilesRepository @Inject constructor(
                     id = id,
                     name = mediaStoreFile.displayName,
                     uri = mediaStoreFile.uri,
-                    relativePath = "$path/${mediaStoreFile.displayName}"
+                    relativePath = "$path$SEPARATOR${mediaStoreFile.displayName}",
+                    level = path.split(SEPARATOR).size
                 )
                 FolderItem.ImageFile.ImageType.entries.map { it.extension }.contains(fileExt) -> FolderItem.ImageFile(
                     id = id,
@@ -61,12 +64,18 @@ class FilesRepository @Inject constructor(
                     size = mediaStoreFile.size,
                     type = FolderItem.ImageFile.ImageType.getTypeFromExtension(fileExt)
                 )
-                else -> FolderItem.DocumentFile(
-                    id = id,
-                    name = mediaStoreFile.displayName,
-                    uri = mediaStoreFile.uri,
-                    type = FolderItem.DocumentFile.DocumentType.getTypeFromExtension(fileExt)
-                )
+                else -> {
+                    val type = FolderItem.DocumentFile.DocumentType.getTypeFromExtension(fileExt)
+                    FolderItem.DocumentFile(
+                        id = id,
+                        name = mediaStoreFile.displayName,
+                        uri = mediaStoreFile.uri,
+                        text = if (type == FolderItem.DocumentFile.DocumentType.TXT) {
+                            readTextFromTxtDocument(mediaStoreFile.uri)
+                        } else null,
+                        type = type
+                    )
+                }
             }
         }
     }
@@ -74,15 +83,21 @@ class FilesRepository @Inject constructor(
     suspend fun copyFromUri(sourceUri: Uri, fileName: String, path: String) = withContext(dispatcherIo) {
         context.createFileLikeUri(sourceUri, fileName, getPath(path))?.let { newUri ->
             context.openInputStream(sourceUri)?.use { inputStream ->
-                context.openOutputStream(newUri)?.use { outputStream ->
+                openOutputStream(newUri)?.use { outputStream ->
                     inputStream.copyTo(outputStream)
                 }
             }
         }
     }
 
-    suspend fun openOutputStream(uri: Uri) = withContext(dispatcherIo) {
-        context.openOutputStream(uri)
+    suspend fun writeTextToFile(uri: Uri, text: String) {
+        openOutputStream(uri)?.use { outputStream ->
+            outputStream.write(text.toByteArray(Charsets.UTF_8))
+        }
+    }
+
+    suspend fun openOutputStream(uri: Uri, mode: String = "wt") = withContext(dispatcherIo) {
+        context.openOutputStream(uri, mode)
     }
 
     suspend fun openInputStream(uri: Uri) = withContext(dispatcherIo) {
@@ -105,6 +120,10 @@ class FilesRepository @Inject constructor(
         }
     }
 
+    suspend fun readTextFromTxtDocument(uri: Uri): String? = withContext(dispatcherIo) {
+        context.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+    }
+
     private suspend fun getCollectionModeFolder(): String {
         val isEdit = dataStoreRepository.getCollectionMode()
         return if (isEdit) EDIT_MODE_FOLDER_NAME else NORMAL_MODE_FOLDER_NAME
@@ -112,8 +131,7 @@ class FilesRepository @Inject constructor(
 
     private suspend fun getAccountFolder() = dataStoreRepository.getPhotographName()
 
-    private suspend fun getPath(relativePath: String) =
-        "${getAccountFolder()}/$relativePath"
+    private suspend fun getPath(relativePath: String) = "${getAccountFolder()}$SEPARATOR$relativePath"
 
     companion object {
         private const val EDIT_MODE_FOLDER_NAME = "корректировки"

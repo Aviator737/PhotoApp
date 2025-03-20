@@ -8,19 +8,25 @@ data class GraveyardsUiState(
     val showOptionsButton: Boolean = false,
     val isEditMode: Boolean = false,
 
-    val folderLevel: FolderLevel = FolderLevel.GRAVEYARDS,
     val parentFolders: List<FolderItem.Folder> = listOf(),
     val folderItems: List<FolderItem> = listOf(),
 
-    val newItemDialog: NewFolderItemDialogState? = null,
+    val newFolderDialog: NewFolderDialogState? = null,
+    val photoRowDocumentDialog: PhotoRowDocumentDialog? = null,
     val deleteConfirmationDialog: DeleteConfirmationDialogState? = null,
     val optionsDialog: Boolean = false
 ): UiState {
-    data class NewFolderItemDialogState(
-        val item: FolderItem,
+
+    data class NewFolderDialogState(
+        val item: FolderItem.Folder,
         val focusIndex: Int,
         val isEditMode: Boolean,
         val showEditModeCheckbox: Boolean
+    )
+
+    data class PhotoRowDocumentDialog(
+        val item: FolderItem.DocumentFile,
+        val parent: FolderItem.Folder
     )
 
     data class DeleteConfirmationDialogState(

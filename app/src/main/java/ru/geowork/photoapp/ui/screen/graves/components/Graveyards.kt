@@ -15,6 +15,7 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -23,9 +24,9 @@ import ru.geowork.photoapp.ui.components.AppDialog
 import ru.geowork.photoapp.ui.components.ButtonLarge
 import ru.geowork.photoapp.ui.components.Chip
 import ru.geowork.photoapp.ui.components.FileManager
-import ru.geowork.photoapp.ui.screen.graves.FolderLevel
 import ru.geowork.photoapp.ui.screen.graves.GraveyardsUiAction
 import ru.geowork.photoapp.ui.screen.graves.GraveyardsUiState
+import ru.geowork.photoapp.ui.screen.graves.getFolderTypeNameByLevel
 import ru.geowork.photoapp.ui.theme.AppTheme
 
 @Composable
@@ -33,13 +34,12 @@ fun Graveyards(
     state: GraveyardsUiState,
     onUiAction: (GraveyardsUiAction) -> Unit
 ) {
+    val context = LocalContext.current
 
-    val newBlockPrefix = stringResource(R.string.graves_add_block_prefix)
-    val newRowPrefix = stringResource(R.string.graves_add_row_prefix)
-    val editModePostfix = stringResource(R.string.graves_edit_mode_postfix)
+    val editModePostfix = stringResource(R.string.edit_mode_postfix)
     val folderPostfix = if (state.isEditMode) editModePostfix else ""
 
-    val mapFileName = stringResource(R.string.graves_block_map_file_name)
+    val mapFileName = stringResource(R.string.block_map_file_name)
     val pickFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { imageUri ->
         imageUri?.let { onUiAction(GraveyardsUiAction.OnAddExternalFile(it, mapFileName)) }
     }
@@ -58,9 +58,9 @@ fun Graveyards(
         onBackClick = { onUiAction(GraveyardsUiAction.OnBack) },
         onOptionsClick = { onUiAction(GraveyardsUiAction.OnOptionsClick) }
     ) {
-        if (state.folderLevel == FolderLevel.GRAVEYARDS) {
+        if (state.parentFolders.isEmpty()) {
             Box(modifier = Modifier.padding(top = 8.dp, start = 24.dp)) {
-                Chip(stringResource(R.string.graves_choose_graveyard_title))
+                Chip(stringResource(R.string.folder_l0_hint))
             }
         }
         FileManager(
@@ -70,13 +70,14 @@ fun Graveyards(
             onTakePhotoClick = { onUiAction(GraveyardsUiAction.OnTakePhotoClick(it)) },
             onParentFolderClick = { onUiAction(GraveyardsUiAction.OnParentFolderClick(it)) },
             onFolderItemClick = { onUiAction(GraveyardsUiAction.OnFolderItemClick(it)) },
-            onChildItemClick = { parent, child -> onUiAction(GraveyardsUiAction.OnChildItemClick(parent, child)) }
+            onPhotoRowPhotoClick = { parent, child -> onUiAction(GraveyardsUiAction.OnPhotoRowPhotoClick(parent, child)) },
+            onPhotoRowDocumentClick = { parent, child -> onUiAction(GraveyardsUiAction.OnPhotoRowDocumentClick(parent, child)) },
         ) {
             Column(
                 modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (state.folderLevel != FolderLevel.GRAVEYARDS) {
+                if (state.parentFolders.isNotEmpty()) {
                     ButtonLarge(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -86,25 +87,17 @@ fun Graveyards(
                             contentColor = AppTheme.colors.contentPrimary
                         ),
                         onClick = {
-                            val prefix = when(state.folderLevel) {
-                                FolderLevel.GRAVEYARDS -> ""
-                                FolderLevel.BLOCKS -> newBlockPrefix
-                                FolderLevel.ROWS -> newRowPrefix
-                            }
+                            val prefix = "${context.getFolderTypeNameByLevel(state.parentFolders.size, true)}_"
                             onUiAction(GraveyardsUiAction.OnAddFolderClick(prefix, folderPostfix))
                         }
                     ) {
                         Text(
-                            text = when (state.folderLevel) {
-                                FolderLevel.GRAVEYARDS -> stringResource(R.string.graves_add_graveyard)
-                                FolderLevel.BLOCKS -> stringResource(R.string.graves_add_block)
-                                FolderLevel.ROWS -> stringResource(R.string.graves_add_row)
-                            },
+                            text = "${stringResource(R.string.add)} ${getFolderTypeNameByLevel(state.parentFolders.size)}",
                             style = AppTheme.typography.semibold16
                         )
                     }
                 }
-                if (state.folderLevel == FolderLevel.ROWS) {
+                if (state.parentFolders.size > 1) {
                     ButtonLarge(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -116,23 +109,10 @@ fun Graveyards(
                         onClick = { pickFileLauncher.launch("*/*") }
                     ) {
                         Text(
-                            text = stringResource(R.string.graves_add_image_file),
+                            text = stringResource(R.string.add_image_file),
                             style = AppTheme.typography.semibold16
                         )
                     }
-//                    ButtonLarge(
-//                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-//                        colors = ButtonDefaults.buttonColors(
-//                            backgroundColor = AppTheme.colors.contentBackground,
-//                            contentColor = AppTheme.colors.contentPrimary
-//                        ),
-//                        onClick = { onUiAction(GraveyardsUiAction.OnAddTextFileClick) }
-//                    ) {
-//                        Text(
-//                            text = stringResource(R.string.graves_add_text_file),
-//                            style = AppTheme.typography.semibold16
-//                        )
-//                    }
                 }
             }
         }
@@ -140,7 +120,7 @@ fun Graveyards(
 
     if (state.optionsDialog) {
         AppDialog(
-            title = stringResource(R.string.graves_options_title),
+            title = stringResource(R.string.options_title),
             onDismiss = { onUiAction(GraveyardsUiAction.OnOptionsDismiss) },
             onConfirm = null
         ) {
@@ -168,21 +148,29 @@ fun Graveyards(
                 onClick = { onUiAction(GraveyardsUiAction.OnDeleteRequestClick) }
             ) {
                 Text(
-                    text = stringResource(R.string.graves_options_remove_folder, state.parentFolders.last().name),
+                    text = stringResource(R.string.options_remove_folder, state.parentFolders.last().name),
                     style = AppTheme.typography.semibold16
                 )
             }
         }
     }
 
-    state.newItemDialog?.let { item ->
+    state.newFolderDialog?.let { item ->
         CreateFolderItemDialog(
             state = item,
-            folderLevel = state.folderLevel,
             onEditModeCheckBoxClick = { onUiAction(GraveyardsUiAction.OnEditModeCheckboxClick(it, editModePostfix)) },
             onNameInput = { onUiAction(GraveyardsUiAction.OnItemNameInput(it, editModePostfix)) },
             onDismiss = { onUiAction(GraveyardsUiAction.OnDismissItemDialog) },
             onConfirm = { onUiAction(GraveyardsUiAction.OnItemNameConfirm) }
+        )
+    }
+
+    state.photoRowDocumentDialog?.let { item ->
+        CreatePhotoRowDocumentDialog(
+            state = item,
+            onTextInput = { onUiAction(GraveyardsUiAction.OnPhotoRowDocumentDialogTextInput(it)) },
+            onDismiss = { onUiAction(GraveyardsUiAction.OnPhotoRowDocumentDialogDismiss) },
+            onConfirm = { onUiAction(GraveyardsUiAction.OnPhotoRowDocumentDialogConfirm) }
         )
     }
 

@@ -7,6 +7,7 @@
     <string name="save">Сохранить</string>
     <string name="confirm">Подтвердить</string>
     <string name="next">Продолжить</string>
+    <string name="add">Добавить</string>
     <string name="delete">Удалить</string>
 
     <string name="permissions_not_granted_blocked_title">Права не получены</string>
@@ -26,30 +27,32 @@
     <string name="main_menu_poles">Опоры</string>
     <string name="main_menu_settings">Настройки</string>
 
-    <string name="graves_normal_mode">Сбор участков</string>
-    <string name="graves_edit_mode">Корректировки</string>
+    <string name="normal_mode">Сбор участков</string>
+    <string name="edit_mode">Корректировки</string>
 
-    <string name="graves_choose_graveyard_title">Выберите погост</string>
-    <string name="graves_add_block">Добавить квартал</string>
-    <string name="graves_add_graveyard">Добавить погост</string>
-    <string name="graves_add_row">Добавить ряд</string>
-    <string name="graves_add_image_file">Загрузить карту квартала</string>
-    <string name="graves_add_text_file">Создать заметку</string>
+    <string name="folder_l0_hint">Выберите погост</string>
+    <string name="add_image_file">Загрузить карту квартала</string>
 
-    <string name="graves_add_block_prefix">Квартал_</string>
-    <string name="graves_add_row_prefix">Ряд_</string>
-    <string name="graves_edit_mode_postfix">_корректировки</string>
-    <string name="graves_edit_mode_postfix_short">korr</string>
-    <string name="graves_add_graveyard_hint">Название погоста</string>
-    <string name="graves_add_block_hint">Название квартала</string>
-    <string name="graves_add_row_hint">Название ряда</string>
-    <string name="graves_add_text_file_hint">Название заметки</string>
+    <string name="folder_l0_name">погост</string>
+    <string name="folder_l1_name">квартал</string>
+    <string name="folder_l2_name">ряд</string>
+    <string name="folder_ln_name">папка</string>
 
-    <string name="graves_block_map_file_name">Карта квартала</string>
+    <string name="edit_mode_postfix">_корректировки</string>
+    <string name="edit_mode_postfix_short">korr</string>
 
-    <string name="graves_options_title">Выберите действие</string>
-    <string name="graves_options_end">Завершить квартал</string>
-    <string name="graves_options_remove_folder">Удалить %1$s</string>
+    <string name="block_map_file_name">Карта квартала</string>
+    <string name="row_add_note">+ заметка</string>
+    <string name="site_count_title">Количество участков</string>
+    <plurals name="sites_postfix">
+        <item quantity="one">участок</item>
+        <item quantity="few">участка</item>
+        <item quantity="other">участков</item>
+    </plurals>
+
+    <string name="options_title">Выберите действие</string>
+    <string name="options_end">Завершить квартал</string>
+    <string name="options_remove_folder">Удалить %1$s</string>
 
     <string name="confirm_delete_title">Подтвердите действие</string>
     <string name="confirm_delete_text">Вы действительно хотите удалить %1$s?</string>

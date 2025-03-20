@@ -16,6 +16,10 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
@@ -40,6 +44,9 @@ fun Settings(
 ) {
     val focusManager = LocalFocusManager.current
 
+    val clickCountToUnlockMaxImageSize = 20
+    var versionClickCount by remember { mutableIntStateOf(0) }
+
     Column(modifier = Modifier
         .fillMaxSize()
         .safeDrawingPadding()
@@ -53,7 +60,7 @@ fun Settings(
                 icon = painterResource(R.drawable.ic_image),
                 hint = stringResource(R.string.settings_image_max_size_hint),
                 keyboardType = KeyboardType.Number,
-                enabled = false,
+                enabled = versionClickCount >= clickCountToUnlockMaxImageSize,
                 value = quality,
                 onInput = { onUiAction(SettingsUiAction.OnImageMaxSizeInput(it)) }
             )
@@ -111,6 +118,7 @@ fun Settings(
         Spacer(Modifier.weight(1f))
         Text(
             modifier = Modifier
+                .noRippleClickable { versionClickCount++ }
                 .padding(
                     start = 12.dp,
                     end = 12.dp,
@@ -120,7 +128,7 @@ fun Settings(
             text = "Версия приложения - ${BuildConfig.VERSION_NAME}",
             color = AppTheme.colors.contentSecondary,
             style = AppTheme.typography.medium16,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }

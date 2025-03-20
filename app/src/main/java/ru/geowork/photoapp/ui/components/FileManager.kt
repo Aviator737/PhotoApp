@@ -29,7 +29,8 @@ fun FileManager(
     onTakePhotoClick: (FolderItem.Folder) -> Unit,
     onParentFolderClick: (FolderItem.Folder) -> Unit,
     onFolderItemClick: (FolderItem) -> Unit,
-    onChildItemClick: (parent: FolderItem.Folder, child: FolderItem) -> Unit,
+    onPhotoRowPhotoClick: (parent: FolderItem.Folder, image: FolderItem.ImageFile) -> Unit,
+    onPhotoRowDocumentClick: (parent: FolderItem.Folder, document: FolderItem.DocumentFile?) -> Unit,
     createButtons: @Composable () -> Unit
 ) {
     val parentFoldersScrollState = rememberLazyListState()
@@ -68,7 +69,8 @@ fun FileManager(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp),
                         folder = item,
                         onTakePhotoClick = { onTakePhotoClick(item) },
-                        onPhotoClick = { onChildItemClick(item, it) }
+                        onPhotoClick = { onPhotoRowPhotoClick(item, it) },
+                        onDocumentClick = { onPhotoRowDocumentClick(item, it) }
                     )
                     else -> ListItemWithIcon(
                         modifier = Modifier.padding(horizontal = 24.dp),
