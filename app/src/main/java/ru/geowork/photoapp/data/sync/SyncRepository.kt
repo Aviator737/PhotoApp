@@ -60,11 +60,10 @@ class SyncRepository @Inject constructor(
                 updateProgress(path, SyncState.Uploaded)
             } else {
                 saveSyncState(path, SavedSyncState.FAILED)
-                updateProgress(path, SyncState.Failed)
+                updateProgress(path, SyncState.Failed(Exception("Не удалось создать архив")))
             }
         }.onFailure { e ->
-            updateProgress(path, SyncState.Failed)
-            Log.e(SyncRepository::class.java.name, e.message ?: "")
+            updateProgress(path, SyncState.Failed(e))
         }
     }
 

@@ -91,7 +91,7 @@ class SyncForegroundService : Service() {
                 builder.setContentText(getString(R.string.state_connecting))
                 builder.setProgress(100, 0, true)
             }
-            SyncState.Failed -> {
+            is SyncState.Failed -> {
                 builder.setSmallIcon(R.drawable.ic_error)
                 builder.setContentText(getString(R.string.state_failed))
                 builder.setOngoing(false)

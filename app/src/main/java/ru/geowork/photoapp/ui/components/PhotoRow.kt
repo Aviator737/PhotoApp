@@ -113,13 +113,17 @@ fun PhotoRow(
         }
         Row(modifier = Modifier.padding(horizontal = 16.dp)) {
             Chip(
-                text = if (note.isEmpty()) {
-                    stringResource(R.string.add_note)
-                } else {
-                    val intValue = note.toIntOrNull() ?: 10
-                    "$note ${pluralStringResource(R.plurals.sites_postfix, intValue)}"
+                text = when {
+                    note.isEmpty() && !isReadOnly -> stringResource(R.string.add_note)
+                    note.isNotEmpty() -> {
+                        val intValue = note.toIntOrNull() ?: 10
+                        "$note ${pluralStringResource(R.plurals.sites_postfix, intValue)}"
+                    }
+                    else -> stringResource(R.string.sites_not_set)
                 },
-                onClick = onNoteClick
+                isError = isReadOnly && note.isEmpty(),
+                isEnabled = !isReadOnly,
+                onClick = { onNoteClick() }
             )
         }
     }

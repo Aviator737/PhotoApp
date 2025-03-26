@@ -16,20 +16,25 @@ import ru.geowork.photoapp.ui.theme.AppTheme
 @Composable
 fun Chip(
     text: String,
+    isError: Boolean = false,
+    isEnabled: Boolean = true,
     onClick: () -> Unit = {}
 ) {
     val shape = RoundedCornerShape(4.dp)
     Box(
         modifier = Modifier
-            .background(color = AppTheme.colors.contentBackground, shape = shape)
+            .background(
+                color = if (isError) AppTheme.colors.systemErrorPrimary else AppTheme.colors.contentBackground,
+                shape = shape
+            )
             .clip(shape)
-            .clickable { onClick() }
+            .clickable(isEnabled) { onClick() }
             .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
         Text(
             text = text,
             style = AppTheme.typography.medium16,
-            color = AppTheme.colors.contentSubPrimary
+            color = if (isError) AppTheme.colors.contentConstant else AppTheme.colors.contentSubPrimary,
         )
     }
 }
@@ -39,7 +44,7 @@ fun Chip(
 fun PreviewChip() {
     AppTheme {
         Box(Modifier.padding(16.dp)) {
-            Chip(text = "Chip") {}
+            Chip(text = "Chip", isError = false) {}
         }
     }
 }

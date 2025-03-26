@@ -6,7 +6,7 @@ sealed class SyncState {
     data object NotReady: SyncState()
     data object Ready: SyncState()
     data object Uploaded: SyncState()
-    data object Failed: SyncState()
+    data class Failed(val throwable: Throwable): SyncState()
 
     data class Archiving(val value: Float): SyncState()
 
@@ -18,7 +18,7 @@ sealed class SyncState {
             SavedSyncState.NOT_READY -> NotReady
             SavedSyncState.READY -> Ready
             SavedSyncState.UPLOADED -> Uploaded
-            SavedSyncState.FAILED -> Failed
+            SavedSyncState.FAILED -> Failed(Exception())
         }
     }
 }

@@ -126,12 +126,19 @@ fun SyncStateBar(
                     textAlign = TextAlign.Center
                 )
             }
-            SyncState.Failed -> {
+            is SyncState.Failed -> {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.state_failed),
                     color = AppTheme.colors.systemErrorPrimary,
                     style = AppTheme.typography.medium20,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    text = state.throwable.message.orEmpty(),
+                    color = AppTheme.colors.systemErrorPrimary,
+                    style = AppTheme.typography.regular14,
                     textAlign = TextAlign.Center
                 )
                 ButtonLarge(

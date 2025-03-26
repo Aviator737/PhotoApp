@@ -14,7 +14,7 @@ class GalleryViewModel @AssistedInject constructor(
     @Assisted private val payload: GalleryPayload
 ): BaseViewModel<GalleryUiState, GalleryUiEvent, GalleryUiAction>() {
 
-    override val initialUiState: GalleryUiState = GalleryUiState(currentItem = payload.position)
+    override val initialUiState: GalleryUiState = GalleryUiState(currentItem = payload.position, isReadOnly = payload.isReadOnly)
 
     init {
         getItems()

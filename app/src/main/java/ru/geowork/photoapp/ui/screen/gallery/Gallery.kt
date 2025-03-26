@@ -186,18 +186,20 @@ fun Gallery(
             .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            ButtonLarge(
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = AppTheme.colors.systemErrorPrimary,
-                    contentColor = AppTheme.colors.contentConstant
-                ),
-                onClick = { onUiAction(GalleryUiAction.OnDeleteClick) }
-            ) {
-                Text(
-                    text = stringResource(id = R.string.delete),
-                    style = AppTheme.typography.semibold16
-                )
+            if (!state.isReadOnly) {
+                ButtonLarge(
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = AppTheme.colors.systemErrorPrimary,
+                        contentColor = AppTheme.colors.contentConstant
+                    ),
+                    onClick = { onUiAction(GalleryUiAction.OnDeleteClick) }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.delete),
+                        style = AppTheme.typography.semibold16
+                    )
+                }
             }
             ButtonLarge(
                 modifier = Modifier.weight(1f),

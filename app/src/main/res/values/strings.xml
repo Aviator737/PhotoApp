@@ -49,6 +49,7 @@
         <item quantity="few">участка</item>
         <item quantity="other">участков</item>
     </plurals>
+    <string name="sites_not_set">Кол-во участков не указано</string>
 
     <string name="options_title">Выберите действие</string>
     <string name="options_end">Завершить квартал</string>
