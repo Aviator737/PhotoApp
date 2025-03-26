@@ -1,6 +1,5 @@
 package ru.geowork.photoapp.ui.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,18 +21,18 @@ import ru.geowork.photoapp.R
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.theme.AppTheme
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FileManager(
     modifier: Modifier = Modifier,
     parentFolders: List<FolderItem.Folder>,
     folderItems: List<FolderItem>,
+    notes: Map<String, String>,
     isReadOnly: Boolean,
     onTakePhotoClick: (FolderItem.Folder) -> Unit,
     onParentFolderClick: (FolderItem.Folder) -> Unit,
     onFolderItemClick: (FolderItem) -> Unit,
     onPhotoRowPhotoClick: (parent: FolderItem.Folder, image: FolderItem.ImageFile) -> Unit,
-    onPhotoRowDocumentClick: (parent: FolderItem.Folder, document: FolderItem.DocumentFile?) -> Unit,
+    onPhotoRowNoteClick: (parent: FolderItem.Folder) -> Unit,
     notification: @Composable () -> Unit,
     createButtons: @Composable () -> Unit
 ) {
@@ -41,7 +40,7 @@ fun FileManager(
 
     LaunchedEffect(parentFolders.size) {
         if (parentFolders.isNotEmpty()) {
-            parentFoldersScrollState.animateScrollToItem(parentFolders.lastIndex)
+            //parentFoldersScrollState.animateScrollToItem(parentFolders.lastIndex)
         }
     }
 
@@ -73,10 +72,11 @@ fun FileManager(
                     item is FolderItem.Folder && item.childItems != null -> PhotoRow(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp),
                         folder = item,
+                        note = notes[item.name].orEmpty(),
                         isReadOnly = isReadOnly,
                         onTakePhotoClick = { onTakePhotoClick(item) },
                         onPhotoClick = { onPhotoRowPhotoClick(item, it) },
-                        onDocumentClick = { onPhotoRowDocumentClick(item, it) }
+                        onNoteClick = { onPhotoRowNoteClick(item) }
                     )
                     else -> ListItemWithIcon(
                         modifier = Modifier.padding(horizontal = 24.dp),

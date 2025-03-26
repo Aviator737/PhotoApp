@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.data.FilesRepository
+import ru.geowork.photoapp.data.FilesRepository.Companion.NOTE_FILE_NAME
 import ru.geowork.photoapp.data.GraveyardsRepository
 import ru.geowork.photoapp.data.sync.SavedSyncState
 import ru.geowork.photoapp.data.sync.SyncRepository
@@ -60,8 +61,7 @@ class GraveyardsViewModel @Inject constructor(
             is GraveyardsUiAction.OnFolderItemClick -> handleOnFolderItemClick(uiAction.item)
             is GraveyardsUiAction.OnPhotoRowPhotoClick -> handleOnPhotoRowPhotoClick(uiAction.parent, uiAction.image)
 
-            is GraveyardsUiAction.OnPhotoRowDocumentClick ->
-                handleOnPhotoRowDocumentClick(uiAction.documentName, uiAction.parent, uiAction.document)
+            is GraveyardsUiAction.OnPhotoRowDocumentClick -> handleOnPhotoRowDocumentClick(uiAction.parent)
             is GraveyardsUiAction.OnPhotoRowDocumentDialogTextInput -> handleOnPhotoRowDocumentDialogTextInput(uiAction.text)
             GraveyardsUiAction.OnPhotoRowDocumentDialogConfirm -> handleOnPhotoRowDocumentDialogConfirm()
             GraveyardsUiAction.OnPhotoRowDocumentDialogDismiss -> handleOnPhotoRowDocumentDialogDismiss()
@@ -176,46 +176,32 @@ class GraveyardsViewModel @Inject constructor(
         }
     }
 
-    private fun handleOnPhotoRowDocumentClick(
-        documentName: String,
-        parent: FolderItem.Folder,
-        document: FolderItem.DocumentFile?
-    ) {
-        updateUiState {
-            it.copy(photoRowDocumentDialog = GraveyardsUiState.PhotoRowDocumentDialog(
-                item = document ?: FolderItem.DocumentFile(
-                    name = documentName,
-                    type = FolderItem.DocumentFile.DocumentType.TXT
-                ),
-                parent = parent
-            ))
-        }
+    private fun handleOnPhotoRowDocumentClick(parent: FolderItem.Folder) = updateUiState {
+        it.copy(photoRowDocumentDialog = GraveyardsUiState.PhotoRowDocumentDialog(
+            text = uiState.value.notes[parent.name] ?: "",
+            parent = parent
+        ))
     }
 
     private fun handleOnPhotoRowDocumentDialogTextInput(text: String) = updateUiState {
-        it.copy(photoRowDocumentDialog = it.photoRowDocumentDialog?.copy(
-            item = it.photoRowDocumentDialog.item.copy(text = text)
-        ))
+        it.copy(photoRowDocumentDialog = it.photoRowDocumentDialog?.copy(text = text))
     }
 
     private fun handleOnPhotoRowDocumentDialogDismiss() = updateUiState { it.copy(photoRowDocumentDialog = null) }
 
     private fun handleOnPhotoRowDocumentDialogConfirm() = viewModelScopeErrorHandled.launch {
+        val path = getPath()
         uiState.value.photoRowDocumentDialog?.let { dialog ->
-            val text = dialog.item.text ?: return@launch
-            val documentUri = dialog.item.uri ?: filesRepository.createFolderItem(dialog.item, dialog.parent.relativePath)
-            documentUri?.let { uri -> filesRepository.writeTextToFile(uri, text) }
-            val folderItems = uiState.value.folderItems.map { item ->
-                if (item == dialog.parent && item is FolderItem.Folder) {
-                    item.copy(childItems = filesRepository.getFolderItems(item.relativePath))
-                } else item
+            val mergedData = uiState.value.notes.toMutableMap().apply {
+                put(dialog.parent.name, dialog.text)
             }
-            updateUiState { state ->
-                state.copy(
-                    folderItems = folderItems,
-                    photoRowDocumentDialog = null
-                )
-            }
+            filesRepository.writeNote(path, mergedData)
+        }
+        val notes = filesRepository.readNote(path)
+        updateUiState { it.copy(photoRowDocumentDialog = null, notes = notes) }
+        if (uiState.value.folderItems.none { it.name.contains(NOTE_FILE_NAME) }) {
+            val folderItems = getFolderItems()
+            updateUiState { it.copy(folderItems = folderItems) }
         }
     }
 
@@ -377,6 +363,7 @@ class GraveyardsViewModel @Inject constructor(
         else -> filesRepository.getFolderItems(path)
     }.apply {
         subscribeToSyncProgressFlow(path)
+        initNotes(path)
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -388,6 +375,11 @@ class GraveyardsViewModel @Inject constructor(
         val folderItems = filesRepository.getFolderItems(getPath(listOf()))
         val foldersWithoutDefaults = folderItems.filterNot { root -> rootGraveyards.any { it.name == root.name } }
         return rootGraveyards.plus(foldersWithoutDefaults)
+    }
+
+    private fun initNotes(path: String) = viewModelScopeErrorHandled.launch {
+        val notes = filesRepository.readNote(path)
+        updateUiState { it.copy(notes = notes) }
     }
 
     private fun shouldShowOptionsButton(parentFoldersSize: Int): Boolean = parentFoldersSize > 1

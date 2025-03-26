@@ -37,20 +37,22 @@ import ru.geowork.photoapp.ui.theme.AppTheme
 fun PhotoRow(
     modifier: Modifier = Modifier,
     folder: FolderItem.Folder,
+    note: String,
     isReadOnly: Boolean,
     onTakePhotoClick: () -> Unit,
     onPhotoClick: (image: FolderItem.ImageFile) -> Unit,
-    onDocumentClick: (document: FolderItem.DocumentFile?) -> Unit
+    onNoteClick: () -> Unit
 ) {
     val items = folder.childItems ?: return
-    if (items.isEmpty()) return
+
+    val lastIndex = if (items.isEmpty()) 0 else folder.childItems.lastIndex
 
     val itemsScrollState = rememberLazyListState(
-        initialFirstVisibleItemIndex = folder.childItems.lastIndex
+        initialFirstVisibleItemIndex = lastIndex
     )
 
     LaunchedEffect(items.size) {
-        itemsScrollState.animateScrollToItem(folder.childItems.lastIndex)
+        itemsScrollState.animateScrollToItem(lastIndex)
     }
 
     Column(
@@ -110,18 +112,15 @@ fun PhotoRow(
             }
         }
         Row(modifier = Modifier.padding(horizontal = 16.dp)) {
-            val note = items.filterIsInstance<FolderItem.DocumentFile>().firstOrNull()
             Chip(
-                text = if (note?.text.isNullOrEmpty()) {
+                text = if (note.isEmpty()) {
                     stringResource(R.string.add_note)
                 } else {
-                    val intValue = note?.text?.toIntOrNull() ?: 10
-                    note?.text?.plus(" ")?.plus(pluralStringResource(R.plurals.sites_postfix, intValue))
-                        ?: stringResource(R.string.add_note)
-                }
-            ) {
-                onDocumentClick(note)
-            }
+                    val intValue = note.toIntOrNull() ?: 10
+                    "$note ${pluralStringResource(R.plurals.sites_postfix, intValue)}"
+                },
+                onClick = onNoteClick
+            )
         }
     }
 }

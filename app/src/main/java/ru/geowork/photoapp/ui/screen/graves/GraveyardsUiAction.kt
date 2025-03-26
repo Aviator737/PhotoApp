@@ -19,11 +19,7 @@ sealed class GraveyardsUiAction: UiAction {
     data class OnFolderItemClick(val item: FolderItem): GraveyardsUiAction()
     data class OnPhotoRowPhotoClick(val parent: FolderItem.Folder, val image: FolderItem.ImageFile): GraveyardsUiAction()
 
-    data class OnPhotoRowDocumentClick(
-        val documentName: String,
-        val parent: FolderItem.Folder,
-        val document: FolderItem.DocumentFile?
-    ): GraveyardsUiAction()
+    data class OnPhotoRowDocumentClick(val parent: FolderItem.Folder): GraveyardsUiAction()
     data class OnPhotoRowDocumentDialogTextInput(val text: String): GraveyardsUiAction()
     data object OnPhotoRowDocumentDialogDismiss: GraveyardsUiAction()
     data object OnPhotoRowDocumentDialogConfirm: GraveyardsUiAction()

@@ -151,7 +151,7 @@ class CameraViewModel @AssistedInject constructor(
     private fun handleOnCaptureSuccess(image: ImageProxy) = viewModelScopeErrorHandled.launch {
         updateUiState { it.copy(isCapturingImage = false) }
 
-        val number = uiState.value.items.size
+        val number = uiState.value.items.size.toString().padStart(5, '0')
         val name = "${payload.name}_$number"
 
         filesRepository.processAndSaveImage(

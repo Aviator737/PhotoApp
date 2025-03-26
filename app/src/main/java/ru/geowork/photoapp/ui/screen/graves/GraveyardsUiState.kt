@@ -15,6 +15,7 @@ data class GraveyardsUiState(
 
     val parentFolders: List<FolderItem.Folder> = listOf(),
     val folderItems: List<FolderItem> = listOf(),
+    val notes: Map<String, String> = mapOf(),
 
     val newFolderDialog: NewFolderDialogState? = null,
     val photoRowDocumentDialog: PhotoRowDocumentDialog? = null,
@@ -30,7 +31,7 @@ data class GraveyardsUiState(
     )
 
     data class PhotoRowDocumentDialog(
-        val item: FolderItem.DocumentFile,
+        val text: String,
         val parent: FolderItem.Folder
     )
 

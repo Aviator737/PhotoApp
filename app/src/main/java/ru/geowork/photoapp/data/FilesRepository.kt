@@ -23,7 +23,9 @@ import ru.geowork.photoapp.util.getExtensionFromMimeType
 import ru.geowork.photoapp.util.getFiles
 import ru.geowork.photoapp.util.openInputStream
 import ru.geowork.photoapp.util.openOutputStream
+import ru.geowork.photoapp.util.readMap
 import ru.geowork.photoapp.util.rotate
+import ru.geowork.photoapp.util.writeMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -79,9 +81,6 @@ class FilesRepository @Inject constructor(
                         id = id,
                         name = mediaStoreFile.displayName,
                         uri = mediaStoreFile.uri,
-                        text = if (type == FolderItem.DocumentFile.DocumentType.TXT) {
-                            readTextFromTxtDocument(mediaStoreFile.uri)
-                        } else null,
                         type = type
                     )
                 }
@@ -104,12 +103,6 @@ class FilesRepository @Inject constructor(
                     inputStream.copyTo(outputStream)
                 }
             }
-        }
-    }
-
-    suspend fun writeTextToFile(uri: Uri, text: String) {
-        openOutputStream(uri)?.use { outputStream ->
-            outputStream.write(text.toByteArray(Charsets.UTF_8))
         }
     }
 
@@ -168,8 +161,21 @@ class FilesRepository @Inject constructor(
             }
     }
 
-    private suspend fun readTextFromTxtDocument(uri: Uri): String? = withContext(dispatcherIo) {
-        context.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+    suspend fun readNote(path: String): Map<String, String> = withContext(dispatcherIo) {
+        val uri = getFolderItems(path).firstOrNull { it.name == "$NOTE_FILE_NAME.txt" }?.uri ?: return@withContext emptyMap()
+        context.openInputStream(uri)?.use { inputStream ->
+            inputStream.readMap()
+        } ?: emptyMap()
+    }
+
+    suspend fun writeNote(path: String, data: Map<String, String>) = withContext(dispatcherIo) {
+        val uri = getFolderItems(path).firstOrNull { it.name == "$NOTE_FILE_NAME.txt" }?.uri ?: run {
+            val newNoteItem = FolderItem.DocumentFile(name = NOTE_FILE_NAME)
+            createFolderItem(newNoteItem, path)
+        } ?: return@withContext null
+        openOutputStream(uri)?.use { outputStream ->
+            outputStream.writeMap(data)
+        }
     }
 
     private suspend fun getCollectionModeFolder(): String {
@@ -191,5 +197,6 @@ class FilesRepository @Inject constructor(
     companion object {
         private const val EDIT_MODE_FOLDER_NAME = "корректировки"
         private const val NORMAL_MODE_FOLDER_NAME = "сбор_участков"
+        const val NOTE_FILE_NAME = "заметка"
     }
 }

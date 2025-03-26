@@ -67,20 +67,13 @@ fun Graveyards(
             modifier = Modifier.fillMaxSize(),
             parentFolders = state.parentFolders,
             folderItems = state.folderItems,
+            notes = state.notes,
             isReadOnly = state.isReadOnly,
             onTakePhotoClick = { onUiAction(GraveyardsUiAction.OnTakePhotoClick(it)) },
             onParentFolderClick = { onUiAction(GraveyardsUiAction.OnParentFolderClick(it)) },
             onFolderItemClick = { onUiAction(GraveyardsUiAction.OnFolderItemClick(it)) },
             onPhotoRowPhotoClick = { parent, child -> onUiAction(GraveyardsUiAction.OnPhotoRowPhotoClick(parent, child)) },
-            onPhotoRowDocumentClick = { parent, child ->
-                onUiAction(
-                    GraveyardsUiAction.OnPhotoRowDocumentClick(
-                        context.getString(R.string.note_document_name),
-                        parent,
-                        child
-                    )
-                )
-            },
+            onPhotoRowNoteClick = { parent -> onUiAction(GraveyardsUiAction.OnPhotoRowDocumentClick(parent)) },
             notification = {
                 SyncStateBar(
                     modifier = Modifier.fillMaxWidth(),

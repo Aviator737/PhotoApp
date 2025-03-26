@@ -11,8 +11,7 @@ sealed class FolderItem {
         override val id: String = "",
         override val name: String = "",
         override val uri: Uri? = null,
-        val type: DocumentType = DocumentType.UNKNOWN,
-        val text: String? = null
+        val type: DocumentType = DocumentType.UNKNOWN
     ): FolderItem() {
         enum class DocumentType(val extension: String) {
             TXT("txt"), PDF("pdf"), JSON("json"), UNKNOWN("txt");

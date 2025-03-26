@@ -38,7 +38,7 @@ fun CreatePhotoRowDocumentDialog(
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp).focusRequester(focusRequester),
             hint = stringResource(R.string.site_count_title),
             keyboardType = KeyboardType.Number,
-            text = state.item.text ?: "",
+            text = state.text,
             onInput = onTextInput
         )
     }
@@ -50,7 +50,7 @@ fun PreviewPhotoRowDocumentDialog() {
     AppTheme {
         CreatePhotoRowDocumentDialog(
             state = GraveyardsUiState.PhotoRowDocumentDialog(
-                item = FolderItem.DocumentFile(name = "test"), FolderItem.Folder()
+                "1", FolderItem.Folder()
             ), {}, {}, {}
         )
     }
