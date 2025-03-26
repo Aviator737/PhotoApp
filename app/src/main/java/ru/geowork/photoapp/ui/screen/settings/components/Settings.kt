@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import ru.geowork.photoapp.BuildConfig
 import ru.geowork.photoapp.R
 import ru.geowork.photoapp.ui.components.AppDialog
+import ru.geowork.photoapp.ui.components.ButtonLarge
 import ru.geowork.photoapp.ui.screen.settings.SettingsUiAction
 import ru.geowork.photoapp.ui.screen.settings.SettingsUiState
 import ru.geowork.photoapp.ui.theme.AppTheme
@@ -44,7 +45,7 @@ fun Settings(
 ) {
     val focusManager = LocalFocusManager.current
 
-    val clickCountToUnlockMaxImageSize = 20
+    val clickCountToUnlockSettings = 20
     var versionClickCount by remember { mutableIntStateOf(0) }
 
     Column(modifier = Modifier
@@ -60,7 +61,7 @@ fun Settings(
                 icon = painterResource(R.drawable.ic_image),
                 hint = stringResource(R.string.settings_image_max_size_hint),
                 keyboardType = KeyboardType.Number,
-                enabled = versionClickCount >= clickCountToUnlockMaxImageSize,
+                enabled = versionClickCount >= clickCountToUnlockSettings,
                 value = quality,
                 onInput = { onUiAction(SettingsUiAction.OnImageMaxSizeInput(it)) }
             )
@@ -114,6 +115,18 @@ fun Settings(
                     }
                 }
             )
+        }
+        if (versionClickCount >= clickCountToUnlockSettings) {
+            ButtonLarge(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                onClick = { onUiAction(SettingsUiAction.OnDeleteSyncStateStoreClick) }
+            ) {
+                Text(
+                    text = "Очистить данные об отправке",
+                    color = AppTheme.colors.contentConstant,
+                    style = AppTheme.typography.regular14
+                )
+            }
         }
         Spacer(Modifier.weight(1f))
         Text(

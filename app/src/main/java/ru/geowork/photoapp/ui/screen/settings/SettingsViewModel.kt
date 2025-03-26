@@ -8,12 +8,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.data.DataStoreRepository
+import ru.geowork.photoapp.data.sync.SyncRepository
 import ru.geowork.photoapp.ui.base.BaseViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val dataStoreRepository: DataStoreRepository
+    private val dataStoreRepository: DataStoreRepository,
+    private val syncRepository: SyncRepository
 ): BaseViewModel<SettingsUiState, SettingsUiEvent, SettingsUiAction>() {
 
     override val initialUiState: SettingsUiState = SettingsUiState()
@@ -33,6 +35,7 @@ class SettingsViewModel @Inject constructor(
             SettingsUiAction.OnCaptureModeOpenChooser -> handleOnCaptureModeOpenChooser()
             SettingsUiAction.OnCaptureModeSelectorConfirm -> handleOnCaptureModeSelectorConfirm()
             SettingsUiAction.OnCaptureModeSelectorDismiss -> handleOnCaptureModeSelectorDismiss()
+            SettingsUiAction.OnDeleteSyncStateStoreClick -> handleOnDeleteSyncStateStoreClick()
         }
     }
 
@@ -74,6 +77,8 @@ class SettingsViewModel @Inject constructor(
 
     private fun handleOnCaptureModeSelectorDismiss() =
         updateUiState { it.copy(captureModeState = it.captureModeState.copy(chooser = null)) }
+
+    private fun handleOnDeleteSyncStateStoreClick() = syncRepository.deleteSyncStateStore()
 
     private fun initSettings() = viewModelScopeErrorHandled.launch {
         val imageQuality = dataStoreRepository.getMaxImageSize()

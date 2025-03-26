@@ -12,19 +12,18 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.composable
+import ru.geowork.photoapp.SyncForegroundService.Companion.startForegroundArchiveAndUpload
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.screen.camera.CameraPayload
 import ru.geowork.photoapp.ui.screen.gallery.GalleryPayload
 import ru.geowork.photoapp.ui.screen.graves.components.Graveyards
-import ru.geowork.photoapp.ui.screen.upload.UploadPayload
 
 const val GRAVEYARDS_SCREEN_ID = "graveyards_screen"
 
 fun NavGraphBuilder.graveyardsScreen(
     onBack: () -> Unit,
     navigateToCamera: (CameraPayload) -> Unit,
-    navigateToGallery: (GalleryPayload) -> Unit,
-    navigateToUpload: (UploadPayload) -> Unit
+    navigateToGallery: (GalleryPayload) -> Unit
 ) {
     composable(GRAVEYARDS_SCREEN_ID) {
         val viewModel: GraveyardsViewModel = hiltViewModel()
@@ -40,8 +39,8 @@ fun NavGraphBuilder.graveyardsScreen(
                 when(uiEvent) {
                     is GraveyardsUiEvent.NavigateToCamera -> navigateToCamera(uiEvent.payload)
                     is GraveyardsUiEvent.NavigateToGallery -> navigateToGallery(uiEvent.payload)
-                    is GraveyardsUiEvent.NavigateToUpload -> navigateToUpload(uiEvent.payload)
                     is GraveyardsUiEvent.OpenInExternalApp -> context.openInExternalApp(uiEvent.item)
+                    is GraveyardsUiEvent.StartForegroundArchiveAndUpload -> startForegroundArchiveAndUpload(context, uiEvent.path)
                     GraveyardsUiEvent.NavigateBack -> onBack()
                 }
             }
@@ -64,6 +63,7 @@ private fun Context.openInExternalApp(item: FolderItem.DocumentFile) {
         FolderItem.DocumentFile.DocumentType.PDF -> "application/pdf"
         FolderItem.DocumentFile.DocumentType.TXT,
         FolderItem.DocumentFile.DocumentType.UNKNOWN -> "text/plain"
+        FolderItem.DocumentFile.DocumentType.JSON -> "application/json"
     }
     val intent = Intent()
     intent.setAction(Intent.ACTION_VIEW)

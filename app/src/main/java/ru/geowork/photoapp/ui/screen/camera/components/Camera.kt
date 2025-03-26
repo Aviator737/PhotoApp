@@ -31,14 +31,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -46,13 +44,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -65,12 +58,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -78,7 +69,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -115,9 +105,7 @@ fun Camera(
     state.zoomLevels.firstOrNull { it.second }?.let { cameraControl?.setZoomRatio(it.first) }
     state.exposureState.selectedStep?.let { cameraControl?.setExposureCompensationIndex(it.index) }
 
-    val itemsScrollState = rememberLazyListState()
-
-    var systemBarVisible by remember { mutableStateOf<Boolean>(true) }
+    var systemBarVisible by remember { mutableStateOf(true) }
 
     BoxWithConstraints {
         if (constraints.maxHeight < 2000) {
@@ -147,12 +135,6 @@ fun Camera(
     LifecycleResumeEffect(Unit) {
         onUiAction(CameraUiAction.OnUpdateFolderItems)
         onPauseOrDispose {}
-    }
-
-    LaunchedEffect(state.items.size) {
-        if (state.items.isNotEmpty()) {
-            itemsScrollState.animateScrollToItem(state.items.lastIndex)
-        }
     }
 
     LaunchedEffect(state.captureMode) {
@@ -381,26 +363,7 @@ fun Camera(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp),
-            state = itemsScrollState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            itemsIndexed(state.items) { index, item ->
-                AsyncImage(
-                    model = item.uri,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onUiAction(CameraUiAction.OnPhotoClick(index)) }
-                )
-            }
-        }
+        CameraPhotoRow(items = state.items) { onUiAction(CameraUiAction.OnPhotoClick(it)) }
     }
 }
 

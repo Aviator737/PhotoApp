@@ -42,7 +42,7 @@
     <string name="edit_mode_postfix_short">korr</string>
 
     <string name="block_map_file_name">Карта квартала</string>
-    <string name="row_add_note">+ заметка</string>
+    <string name="add_note">+ заметка</string>
     <string name="site_count_title">Количество участков</string>
     <plurals name="sites_postfix">
         <item quantity="one">участок</item>
@@ -52,10 +52,22 @@
 
     <string name="options_title">Выберите действие</string>
     <string name="options_end">Завершить квартал</string>
+    <string name="options_continue">Дополнить квартал</string>
     <string name="options_remove_folder">Удалить %1$s</string>
 
     <string name="confirm_delete_title">Подтвердите действие</string>
     <string name="confirm_delete_text">Вы действительно хотите удалить %1$s?</string>
+
+    <string name="state_finished_title">Квартал завершён</string>
+    <string name="state_finished_hint">Квартал находится в режиме \"чтение\". Вы всё ещё можете редактировать его, сняв завершение в контекстном меню.\nПосле отправки, редактировать его будет нельзя.</string>
+    <string name="upload">Отправить на сервер</string>
+    <string name="stop">Стоп</string>
+    <string name="retry">Повторить</string>
+    <string name="state_archiving">Архивация</string>
+    <string name="state_uploading">Отправка</string>
+    <string name="state_connecting">Соединение с сервером</string>
+    <string name="state_failed">Отправка прервана</string>
+    <string name="state_success">Квартал загружен на сервер</string>
 
     <string name="settings_image_max_size_title">Максимальный размер фото</string>
     <string name="settings_image_max_size_description">Большие фотографии будут сжаты до указанного лимита</string>
@@ -70,4 +82,6 @@
     <string name="settings_select_capture_zero_lag_hint">Cамый быстрый, высокое качество. Могут быть проблемы на некоторых устройствах</string>
 
     <string name="poles_unavailable">Режим \"опоры\" недоступен</string>
+
+    <string name="note_document_name">заметка</string>
 </resources>

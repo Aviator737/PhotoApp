@@ -1,7 +1,9 @@
 package ru.geowork.photoapp.ui.activity
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
@@ -29,6 +31,7 @@ import ru.geowork.photoapp.ui.navigation.AppNavigation
 import ru.geowork.photoapp.ui.screen.auth.AUTH_SCREEN_ID
 import ru.geowork.photoapp.ui.screen.mainmenu.MAIN_MENU_SCREEN_ID
 import ru.geowork.photoapp.ui.theme.AppTheme
+import ru.geowork.photoapp.util.hasNotificationsPermissions
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -42,11 +45,19 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    private val requestNotificationsPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (!Environment.isExternalStorageManager()) {
             requestAllFilesPermissions()
+        }
+
+        if (!hasNotificationsPermissions()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestNotificationsPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
 
         enableEdgeToEdge()

@@ -67,11 +67,27 @@ fun Graveyards(
             modifier = Modifier.fillMaxSize(),
             parentFolders = state.parentFolders,
             folderItems = state.folderItems,
+            isReadOnly = state.isReadOnly,
             onTakePhotoClick = { onUiAction(GraveyardsUiAction.OnTakePhotoClick(it)) },
             onParentFolderClick = { onUiAction(GraveyardsUiAction.OnParentFolderClick(it)) },
             onFolderItemClick = { onUiAction(GraveyardsUiAction.OnFolderItemClick(it)) },
             onPhotoRowPhotoClick = { parent, child -> onUiAction(GraveyardsUiAction.OnPhotoRowPhotoClick(parent, child)) },
-            onPhotoRowDocumentClick = { parent, child -> onUiAction(GraveyardsUiAction.OnPhotoRowDocumentClick(parent, child)) },
+            onPhotoRowDocumentClick = { parent, child ->
+                onUiAction(
+                    GraveyardsUiAction.OnPhotoRowDocumentClick(
+                        context.getString(R.string.note_document_name),
+                        parent,
+                        child
+                    )
+                )
+            },
+            notification = {
+                SyncStateBar(
+                    modifier = Modifier.fillMaxWidth(),
+                    state = state.syncState,
+                    onClick = { onUiAction(GraveyardsUiAction.OnSyncBarButtonClick) }
+                )
+            }
         ) {
             Column(
                 modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
@@ -125,20 +141,30 @@ fun Graveyards(
             onConfirm = null
         ) {
             Spacer(modifier = Modifier.height(24.dp))
-//            ButtonLarge(
-//                modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
-//                colors = ButtonDefaults.buttonColors(
-//                    backgroundColor = AppTheme.colors.accentBackground,
-//                    contentColor = AppTheme.colors.accentPrimary
-//                ),
-//                onClick = { onUiAction(GraveyardsUiAction.OnNavigateToUploadClick) }
-//            ) {
-//                Text(
-//                    text = stringResource(R.string.graves_options_end),
-//                    style = AppTheme.typography.semibold16
-//                )
-//            }
-//            Spacer(modifier = Modifier.height(12.dp))
+            if (state.canContinueWork) {
+                ButtonLarge(
+                    modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = AppTheme.colors.accentBackground,
+                        contentColor = AppTheme.colors.accentPrimary
+                    ),
+                    onClick = {
+                        if (state.isReadOnly) {
+                            onUiAction(GraveyardsUiAction.OnContinueWorkClick)
+                        } else {
+                            onUiAction(GraveyardsUiAction.OnFinishWorkClick)
+                        }
+                    }
+                ) {
+                    Text(
+                        text = if (state.isReadOnly) stringResource(R.string.options_continue) else stringResource(
+                            R.string.options_end
+                        ),
+                        style = AppTheme.typography.semibold16
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
             ButtonLarge(
                 modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(

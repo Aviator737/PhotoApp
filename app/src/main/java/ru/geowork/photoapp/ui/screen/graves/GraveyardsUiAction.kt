@@ -11,13 +11,19 @@ sealed class GraveyardsUiAction: UiAction {
 
     data object OnUpdateFolderItems: GraveyardsUiAction()
 
+    data object OnSyncBarButtonClick: GraveyardsUiAction()
+
     data class OnAddExternalFile(val uri: Uri, val fileName: String): GraveyardsUiAction()
 
     data class OnParentFolderClick(val item: FolderItem.Folder): GraveyardsUiAction()
     data class OnFolderItemClick(val item: FolderItem): GraveyardsUiAction()
     data class OnPhotoRowPhotoClick(val parent: FolderItem.Folder, val image: FolderItem.ImageFile): GraveyardsUiAction()
 
-    data class OnPhotoRowDocumentClick(val parent: FolderItem.Folder, val document: FolderItem.DocumentFile?): GraveyardsUiAction()
+    data class OnPhotoRowDocumentClick(
+        val documentName: String,
+        val parent: FolderItem.Folder,
+        val document: FolderItem.DocumentFile?
+    ): GraveyardsUiAction()
     data class OnPhotoRowDocumentDialogTextInput(val text: String): GraveyardsUiAction()
     data object OnPhotoRowDocumentDialogDismiss: GraveyardsUiAction()
     data object OnPhotoRowDocumentDialogConfirm: GraveyardsUiAction()
@@ -33,7 +39,8 @@ sealed class GraveyardsUiAction: UiAction {
     data object OnOptionsClick: GraveyardsUiAction()
     data object OnOptionsDismiss: GraveyardsUiAction()
 
-    data object OnNavigateToUploadClick: GraveyardsUiAction()
+    data object OnContinueWorkClick: GraveyardsUiAction()
+    data object OnFinishWorkClick: GraveyardsUiAction()
     data object OnDeleteRequestClick: GraveyardsUiAction()
     data object OnDeleteDismissClick: GraveyardsUiAction()
     data object OnDeleteConfirmedClick: GraveyardsUiAction()

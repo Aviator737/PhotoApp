@@ -1,5 +1,6 @@
 package ru.geowork.photoapp.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,16 +22,19 @@ import ru.geowork.photoapp.R
 import ru.geowork.photoapp.model.FolderItem
 import ru.geowork.photoapp.ui.theme.AppTheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FileManager(
     modifier: Modifier = Modifier,
     parentFolders: List<FolderItem.Folder>,
     folderItems: List<FolderItem>,
+    isReadOnly: Boolean,
     onTakePhotoClick: (FolderItem.Folder) -> Unit,
     onParentFolderClick: (FolderItem.Folder) -> Unit,
     onFolderItemClick: (FolderItem) -> Unit,
     onPhotoRowPhotoClick: (parent: FolderItem.Folder, image: FolderItem.ImageFile) -> Unit,
     onPhotoRowDocumentClick: (parent: FolderItem.Folder, document: FolderItem.DocumentFile?) -> Unit,
+    notification: @Composable () -> Unit,
     createButtons: @Composable () -> Unit
 ) {
     val parentFoldersScrollState = rememberLazyListState()
@@ -59,6 +63,7 @@ fun FileManager(
                 }
             }
         }
+        notification()
         LazyColumn {
             items(
                 items = folderItems,
@@ -68,6 +73,7 @@ fun FileManager(
                     item is FolderItem.Folder && item.childItems != null -> PhotoRow(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp),
                         folder = item,
+                        isReadOnly = isReadOnly,
                         onTakePhotoClick = { onTakePhotoClick(item) },
                         onPhotoClick = { onPhotoRowPhotoClick(item, it) },
                         onDocumentClick = { onPhotoRowDocumentClick(item, it) }
@@ -81,8 +87,10 @@ fun FileManager(
                             is FolderItem.DocumentFile -> when(item.type) {
                                 FolderItem.DocumentFile.DocumentType.PDF -> painterResource(R.drawable.ic_pdf)
                                 FolderItem.DocumentFile.DocumentType.TXT,
+                                FolderItem.DocumentFile.DocumentType.JSON,
                                 FolderItem.DocumentFile.DocumentType.UNKNOWN -> painterResource(R.drawable.ic_text_file)
                             }
+                            is FolderItem.ZipFile -> painterResource(R.drawable.ic_folder_zip)
                         },
                         endIcon = when(item) {
                             is FolderItem.Folder -> painterResource(R.drawable.chevron_right)
@@ -92,8 +100,10 @@ fun FileManager(
                     )
                 }
             }
-            item {
-                createButtons()
+            if (!isReadOnly) {
+                item {
+                    createButtons()
+                }
             }
         }
     }

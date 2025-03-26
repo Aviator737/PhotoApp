@@ -9,4 +9,6 @@ sealed class SettingsUiAction: UiAction {
     data class OnCaptureModeSelected(val value: Int): SettingsUiAction()
     data object OnCaptureModeSelectorDismiss: SettingsUiAction()
     data object OnCaptureModeSelectorConfirm: SettingsUiAction()
+
+    data object OnDeleteSyncStateStoreClick: SettingsUiAction()
 }

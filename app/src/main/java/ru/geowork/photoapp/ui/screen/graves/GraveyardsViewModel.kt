@@ -2,15 +2,20 @@ package ru.geowork.photoapp.ui.screen.graves
 
 import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import ru.geowork.photoapp.data.DataStoreRepository
 import ru.geowork.photoapp.data.FilesRepository
 import ru.geowork.photoapp.data.GraveyardsRepository
+import ru.geowork.photoapp.data.sync.SavedSyncState
+import ru.geowork.photoapp.data.sync.SyncRepository
 import ru.geowork.photoapp.model.FolderItem
+import ru.geowork.photoapp.model.SyncState
 import ru.geowork.photoapp.ui.base.BaseViewModel
 import ru.geowork.photoapp.ui.screen.camera.CameraPayload
 import ru.geowork.photoapp.ui.screen.gallery.GalleryPayload
-import ru.geowork.photoapp.ui.screen.upload.UploadPayload
 import ru.geowork.photoapp.util.SEPARATOR
 import javax.inject.Inject
 import kotlin.uuid.ExperimentalUuidApi
@@ -20,8 +25,11 @@ import kotlin.uuid.Uuid
 class GraveyardsViewModel @Inject constructor(
     private val graveyardsRepository: GraveyardsRepository,
     private val filesRepository: FilesRepository,
-    private val dataStoreRepository: DataStoreRepository
+    private val dataStoreRepository: DataStoreRepository,
+    private val syncRepository: SyncRepository
 ): BaseViewModel<GraveyardsUiState, GraveyardsUiEvent, GraveyardsUiAction>() {
+
+    private var syncStateJob: Job? = null
 
     private val parentFolders
         get() = uiState.value.parentFolders
@@ -44,13 +52,16 @@ class GraveyardsViewModel @Inject constructor(
 
             GraveyardsUiAction.OnUpdateFolderItems -> updateFolderItems()
 
+            GraveyardsUiAction.OnSyncBarButtonClick -> handleOnSyncBarButtonClick()
+
             is GraveyardsUiAction.OnAddExternalFile -> handleOnAddExternalFile(uiAction.uri, uiAction.fileName)
 
             is GraveyardsUiAction.OnParentFolderClick -> handleOnParentFolderClick(uiAction.item)
             is GraveyardsUiAction.OnFolderItemClick -> handleOnFolderItemClick(uiAction.item)
             is GraveyardsUiAction.OnPhotoRowPhotoClick -> handleOnPhotoRowPhotoClick(uiAction.parent, uiAction.image)
 
-            is GraveyardsUiAction.OnPhotoRowDocumentClick -> handleOnPhotoRowDocumentClick(uiAction.parent, uiAction.document)
+            is GraveyardsUiAction.OnPhotoRowDocumentClick ->
+                handleOnPhotoRowDocumentClick(uiAction.documentName, uiAction.parent, uiAction.document)
             is GraveyardsUiAction.OnPhotoRowDocumentDialogTextInput -> handleOnPhotoRowDocumentDialogTextInput(uiAction.text)
             GraveyardsUiAction.OnPhotoRowDocumentDialogConfirm -> handleOnPhotoRowDocumentDialogConfirm()
             GraveyardsUiAction.OnPhotoRowDocumentDialogDismiss -> handleOnPhotoRowDocumentDialogDismiss()
@@ -66,7 +77,8 @@ class GraveyardsViewModel @Inject constructor(
             GraveyardsUiAction.OnOptionsClick -> handleOnOptionsClick()
             GraveyardsUiAction.OnOptionsDismiss -> handleOnOptionsDismiss()
 
-            GraveyardsUiAction.OnNavigateToUploadClick -> handleOnNavigateToUploadClick()
+            GraveyardsUiAction.OnContinueWorkClick -> handleOnContinueWorkClick()
+            GraveyardsUiAction.OnFinishWorkClick -> handleOnFinishWorkClick()
             GraveyardsUiAction.OnDeleteRequestClick -> handleOnDeleteRequestClick()
             GraveyardsUiAction.OnDeleteDismissClick -> handleOnDeleteDismissClick()
             GraveyardsUiAction.OnDeleteConfirmedClick -> handleOnDeleteConfirmedClick()
@@ -76,6 +88,12 @@ class GraveyardsViewModel @Inject constructor(
     private fun updateFolderItems() = viewModelScopeErrorHandled.launch {
         val folderItems = getFolderItems()
         updateUiState { it.copy(folderItems = folderItems) }
+    }
+
+    private fun handleOnSyncBarButtonClick() = viewModelScopeErrorHandled.launch {
+        parentFolders.lastOrNull()?.let {
+            sendUiEvent(GraveyardsUiEvent.StartForegroundArchiveAndUpload(it.relativePath))
+        }
     }
 
     private fun handleOnAddExternalFile(
@@ -147,21 +165,26 @@ class GraveyardsViewModel @Inject constructor(
             is FolderItem.Folder -> handleFolderClick(item)
             is FolderItem.ImageFile -> handleOnPhotoClick(item)
             is FolderItem.DocumentFile -> handleOnDocumentFileClick(item)
+            is FolderItem.ZipFile -> {}
         }
     }
 
     private fun handleOnPhotoRowPhotoClick(parent: FolderItem.Folder, image: FolderItem.ImageFile) {
         val position = parent.childItems?.indexOf(image) ?: -1
         if (position != -1) {
-            sendUiEvent(GraveyardsUiEvent.NavigateToGallery(GalleryPayload(position, parent.relativePath)))
+            sendUiEvent(GraveyardsUiEvent.NavigateToGallery(GalleryPayload(position, parent.relativePath, uiState.value.isReadOnly)))
         }
     }
 
-    private fun handleOnPhotoRowDocumentClick(parent: FolderItem.Folder, document: FolderItem.DocumentFile?) {
+    private fun handleOnPhotoRowDocumentClick(
+        documentName: String,
+        parent: FolderItem.Folder,
+        document: FolderItem.DocumentFile?
+    ) {
         updateUiState {
             it.copy(photoRowDocumentDialog = GraveyardsUiState.PhotoRowDocumentDialog(
                 item = document ?: FolderItem.DocumentFile(
-                    name = "заметка",
+                    name = documentName,
                     type = FolderItem.DocumentFile.DocumentType.TXT
                 ),
                 parent = parent
@@ -290,7 +313,7 @@ class GraveyardsViewModel @Inject constructor(
     private fun handleOnPhotoClick(item: FolderItem.ImageFile) {
         val position = uiState.value.folderItems.filterIsInstance<FolderItem.ImageFile>().indexOf(item)
         if (position != -1) {
-            sendUiEvent(GraveyardsUiEvent.NavigateToGallery(GalleryPayload(position, item.parentFolder)))
+            sendUiEvent(GraveyardsUiEvent.NavigateToGallery(GalleryPayload(position, item.parentFolder, uiState.value.isReadOnly)))
         }
     }
 
@@ -302,9 +325,16 @@ class GraveyardsViewModel @Inject constructor(
 
     private fun handleOnOptionsDismiss() = updateUiState { it.copy(optionsDialog = false) }
 
-    private fun handleOnNavigateToUploadClick() {
+    private fun handleOnFinishWorkClick() = viewModelScopeErrorHandled.launch {
+        val path = parentFolders.lastOrNull()?.relativePath ?: return@launch
+        syncRepository.saveSyncState(path, SavedSyncState.READY)
         updateUiState { it.copy(optionsDialog = false) }
-        sendUiEvent(GraveyardsUiEvent.NavigateToUpload(UploadPayload(uiState.value.parentFolders.last().relativePath)))
+    }
+
+    private fun handleOnContinueWorkClick() = viewModelScopeErrorHandled.launch {
+        val path = parentFolders.lastOrNull()?.relativePath ?: return@launch
+        syncRepository.saveSyncState(path, SavedSyncState.NOT_READY)
+        updateUiState { it.copy(optionsDialog = false) }
     }
 
     private fun handleOnDeleteRequestClick() = updateUiState {
@@ -324,21 +354,34 @@ class GraveyardsViewModel @Inject constructor(
         }
     }
 
+    private fun subscribeToSyncProgressFlow(path: String) {
+        syncStateJob?.cancel()
+        syncStateJob = syncRepository.syncStateFlow
+            .onEach { map ->
+                val syncState = map.getOrDefault(path, SyncState.NotReady)
+                updateUiState {
+                    it.copy(
+                        canContinueWork = syncState is SyncState.Ready || syncState is SyncState.NotReady,
+                        isReadOnly = syncState !is SyncState.NotReady,
+                        syncState = syncState
+                    )
+                }
+            }.launchIn(viewModelScopeErrorHandled)
+    }
+
     private suspend fun getFolderItems(): List<FolderItem> = getFolderItems(getPath(), uiState.value.parentFolders.size)
 
     private suspend fun getFolderItems(path: String, folderLevel: Int) = when(folderLevel) {
         0 -> getRootFolderItems()
-        2 -> filesRepository.getFolderItems(path).map { item ->
-            if (item is FolderItem.Folder) {
-                val rowPath = "$path$SEPARATOR${item.name}"
-                item.copy(childItems = filesRepository.getFolderItems(rowPath))
-            } else item
-        }
+        2 -> filesRepository.getFolderItemsWithChild(path)
         else -> filesRepository.getFolderItems(path)
+    }.apply {
+        subscribeToSyncProgressFlow(path)
     }
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun getRootFolderItems(): List<FolderItem> {
+        syncStateJob?.cancel()
         val rootGraveyards = graveyardsRepository.getGraveyards().map {
             FolderItem.Folder(id = Uuid.random().toString(), name = it.name, level = 0)
         }

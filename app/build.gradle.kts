@@ -38,6 +38,7 @@ android {
         buildConfigField("int", "SFTP_PORT", "22")
         buildConfigField("String", "SFTP_LOGIN", "\"test_file_upload\"")
         buildConfigField("String", "SFTP_PASSWORD", "\"testPass123\"")
+        buildConfigField("String", "SFTP_REMOTE_PATH", "\"/GW2025/GWApp\"")
     }
 
     signingConfigs {
@@ -89,6 +90,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
 }
@@ -132,6 +134,11 @@ dependencies {
 
     implementation(libs.zelory.compressor)
     implementation(libs.exifinterface)
+
+    implementation(libs.sftp)
+
+    implementation(libs.kstore)
+    implementation(libs.kstore.file)
 
     //Firebase
     implementation(platform(libs.firebase.bom))

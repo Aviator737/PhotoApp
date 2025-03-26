@@ -5,5 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GalleryPayload(
     val position: Int,
-    val path: String
+    val path: String,
+    val isReadOnly: Boolean
 )

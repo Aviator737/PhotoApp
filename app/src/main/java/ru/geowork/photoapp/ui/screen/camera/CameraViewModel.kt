@@ -151,30 +151,27 @@ class CameraViewModel @AssistedInject constructor(
     private fun handleOnCaptureSuccess(image: ImageProxy) = viewModelScopeErrorHandled.launch {
         updateUiState { it.copy(isCapturingImage = false) }
 
-        val buffer = image.planes[0].buffer
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-        image.close()
-
         val number = uiState.value.items.size
         val name = "${payload.name}_$number"
-        val imageItem = FolderItem.ImageFile(name = name, parentFolder = payload.savePath)
 
-        val uri = filesRepository.createFolderItem(imageItem, payload.savePath)
-
-        uri?.let {
-            filesRepository.openOutputStream(uri)?.use { stream -> stream.write(bytes) }
-            getFolderItems()
-            val isCompressed = filesRepository.compressImage(uri)
-            if (isCompressed) getFolderItems()
-        }
+        filesRepository.processAndSaveImage(
+            name = name,
+            savePath = payload.savePath,
+            imageProxy = image,
+            onImageSaved = {
+                getFolderItems()
+            },
+            onImageCompressed = {
+                getFolderItems()
+            }
+        )
     }
 
     private fun handleOnCaptureStarted() = updateUiState { it.copy(isCapturingImage = true) }
     private fun handleOnCaptureError() = updateUiState { it.copy(isCapturingImage = false) }
 
     private fun handleOnPhotoClick(position: Int) {
-        sendUiEvent(CameraUiEvent.NavigateToGallery(GalleryPayload(position, payload.savePath)))
+        sendUiEvent(CameraUiEvent.NavigateToGallery(GalleryPayload(position, payload.savePath, false)))
     }
 
     private fun handleNavigateBack() {

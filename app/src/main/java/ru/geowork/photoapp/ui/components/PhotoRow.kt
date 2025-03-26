@@ -37,18 +37,20 @@ import ru.geowork.photoapp.ui.theme.AppTheme
 fun PhotoRow(
     modifier: Modifier = Modifier,
     folder: FolderItem.Folder,
+    isReadOnly: Boolean,
     onTakePhotoClick: () -> Unit,
     onPhotoClick: (image: FolderItem.ImageFile) -> Unit,
     onDocumentClick: (document: FolderItem.DocumentFile?) -> Unit
 ) {
     val items = folder.childItems ?: return
+    if (items.isEmpty()) return
 
-    val itemsScrollState = rememberLazyListState()
+    val itemsScrollState = rememberLazyListState(
+        initialFirstVisibleItemIndex = folder.childItems.lastIndex
+    )
 
     LaunchedEffect(items.size) {
-        if (items.isNotEmpty()) {
-            itemsScrollState.animateScrollToItem(folder.childItems.lastIndex)
-        }
+        itemsScrollState.animateScrollToItem(folder.childItems.lastIndex)
     }
 
     Column(
@@ -88,20 +90,22 @@ fun PhotoRow(
                     else -> {}
                 }
             }
-            item {
-                Box(
-                    modifier = Modifier.size(64.dp)
-                        .background(AppTheme.colors.contentBorder, RoundedCornerShape(12.dp))
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onTakePhotoClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        modifier = Modifier.size(24.dp),
-                        painter = painterResource(R.drawable.ic_photo_add),
-                        contentDescription = null,
-                        tint = AppTheme.colors.contentPrimary
-                    )
+            if (!isReadOnly) {
+                item {
+                    Box(
+                        modifier = Modifier.size(64.dp)
+                            .background(AppTheme.colors.contentBorder, RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onTakePhotoClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            painter = painterResource(R.drawable.ic_photo_add),
+                            contentDescription = null,
+                            tint = AppTheme.colors.contentPrimary
+                        )
+                    }
                 }
             }
         }
@@ -109,11 +113,11 @@ fun PhotoRow(
             val note = items.filterIsInstance<FolderItem.DocumentFile>().firstOrNull()
             Chip(
                 text = if (note?.text.isNullOrEmpty()) {
-                    stringResource(R.string.row_add_note)
+                    stringResource(R.string.add_note)
                 } else {
                     val intValue = note?.text?.toIntOrNull() ?: 10
                     note?.text?.plus(" ")?.plus(pluralStringResource(R.plurals.sites_postfix, intValue))
-                        ?: stringResource(R.string.row_add_note)
+                        ?: stringResource(R.string.add_note)
                 }
             ) {
                 onDocumentClick(note)

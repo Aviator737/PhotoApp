@@ -15,7 +15,7 @@ sealed class FolderItem {
         val text: String? = null
     ): FolderItem() {
         enum class DocumentType(val extension: String) {
-            TXT("txt"), PDF("pdf"), UNKNOWN("txt");
+            TXT("txt"), PDF("pdf"), JSON("json"), UNKNOWN("txt");
 
             companion object {
                 fun getTypeFromExtension(ext: String) = entries.firstOrNull { ext == it.extension } ?: UNKNOWN
@@ -37,6 +37,18 @@ sealed class FolderItem {
             companion object {
                 fun getTypeFromExtension(ext: String) = ImageType.entries.firstOrNull { ext == it.extension } ?: UNKNOWN
             }
+        }
+    }
+
+    data class ZipFile(
+        override val id: String = "",
+        override val name: String = "",
+        override val uri: Uri? = null,
+        val relativePath: String = "",
+        val size: Long = 0
+    ): FolderItem() {
+        companion object {
+            const val EXTENSION = "zip"
         }
     }
 

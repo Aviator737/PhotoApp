@@ -1,12 +1,17 @@
 package ru.geowork.photoapp.ui.screen.graves
 
 import ru.geowork.photoapp.model.FolderItem
+import ru.geowork.photoapp.model.SyncState
 import ru.geowork.photoapp.ui.base.UiState
 
 data class GraveyardsUiState(
     val showBackButton: Boolean = true,
     val showOptionsButton: Boolean = false,
     val isEditMode: Boolean = false,
+
+    val canContinueWork: Boolean = true,
+    val isReadOnly: Boolean = false,
+    val syncState: SyncState = SyncState.NotReady,
 
     val parentFolders: List<FolderItem.Folder> = listOf(),
     val folderItems: List<FolderItem> = listOf(),
